@@ -25,6 +25,12 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
+#include <locale.h>
+
+#ifdef HAVE_LIBINTL_H
+#include <libintl.h>
+#endif
 
 #include <libxml/xmlwriter.h>
 
@@ -38,6 +44,8 @@
 #define _(str) str
 //#define N_(str) str
 #endif
+
+static char *filetime_to_8601 (int64_t windows_ticks);
 
 /* Callback functions. */
 static int node_start (hive_h *, void *, hive_node_h, const char *name);
@@ -76,8 +84,10 @@ int
 main (int argc, char *argv[])
 {
   setlocale (LC_ALL, "");
+#ifdef HAVE_BINDTEXTDOMAIN
   bindtextdomain (PACKAGE, LOCALEBASEDIR);
   textdomain (PACKAGE);
+#endif
 
   int c;
   int open_flags = 0;
@@ -124,6 +134,17 @@ main (int argc, char *argv[])
   XML_CHECK (xmlTextWriterStartDocument, (writer, NULL, "utf-8", NULL));
   XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "hive"));
 
+  int64_t hive_mtime = hivex_last_modified (h);
+  if (hive_mtime >= 0) {
+    char *timebuf = filetime_to_8601 (hive_mtime);
+    if (timebuf) {
+      XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "mtime"));
+      XML_CHECK (xmlTextWriterWriteString, (writer, BAD_CAST timebuf));
+      XML_CHECK (xmlTextWriterEndElement, (writer));
+      free (timebuf);
+    }
+  }
+
   if (hivex_visit (h, &visitor, sizeof visitor, writer, visit_flags) == -1) {
     perror (argv[optind]);
     exit (EXIT_FAILURE);
@@ -141,12 +162,78 @@ main (int argc, char *argv[])
   exit (EXIT_SUCCESS);
 }
 
+/* Convert Windows filetime to ISO 8601 format.
+ * http://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux/6161842#6161842
+ *
+ * Source for time_t->char* conversion: Fiwalk version 0.6.14's
+ * fiwalk.cpp.
+ *
+ * The caller should free the returned buffer.
+ *
+ * This function returns NULL on a 0 input.  In the context of
+ * hives, which only have mtimes, 0 will always be a complete
+ * absence of data.
+ */
+
+#define WINDOWS_TICK 10000000LL
+#define SEC_TO_UNIX_EPOCH 11644473600LL
+#define TIMESTAMP_BUF_LEN 32
+
+static char *
+filetime_to_8601 (int64_t windows_ticks)
+{
+  char *ret;
+  time_t t;
+  struct tm *tm;
+
+  if (windows_ticks == 0LL)
+    return NULL;
+
+  t = windows_ticks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH;
+  tm = gmtime (&t);
+  if (tm == NULL)
+    return NULL;
+
+  ret = malloc (TIMESTAMP_BUF_LEN);
+  if (ret == NULL) {
+    perror ("malloc");
+    exit (EXIT_FAILURE);
+  }
+
+  if (strftime (ret, TIMESTAMP_BUF_LEN, "%FT%TZ", tm) == 0) {
+    perror ("strftime");
+    exit (EXIT_FAILURE);
+  }
+
+  return ret;
+}
+
 static int
 node_start (hive_h *h, void *writer_v, hive_node_h node, const char *name)
 {
+  int64_t last_modified;
+  char *timebuf;
+  int ret = 0;
+
   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
   XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "node"));
   XML_CHECK (xmlTextWriterWriteAttribute, (writer, BAD_CAST "name", BAD_CAST name));
+
+  if (node == hivex_root (h)) {
+    XML_CHECK (xmlTextWriterWriteAttribute, (writer, BAD_CAST "root", BAD_CAST "1"));
+  }
+
+  last_modified = hivex_node_timestamp (h, node);
+  if (last_modified >= 0) {
+    timebuf = filetime_to_8601 (last_modified);
+    if (timebuf) {
+      XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "mtime"));
+      XML_CHECK (xmlTextWriterWriteString, (writer, BAD_CAST timebuf));
+      XML_CHECK (xmlTextWriterEndElement, (writer));
+      free (timebuf);
+    }
+  }
+
   return 0;
 }
 
@@ -206,7 +293,9 @@ value_string (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
   }
 
   start_value (writer, key, type, NULL);
+  XML_CHECK (xmlTextWriterStartAttribute, (writer, BAD_CAST "value"));
   XML_CHECK (xmlTextWriterWriteString, (writer, BAD_CAST str));
+  XML_CHECK (xmlTextWriterEndAttribute, (writer));
   end_value (writer);
   return 0;
 }
@@ -260,7 +349,9 @@ value_string_invalid_utf16 (hive_h *h, void *writer_v, hive_node_h node,
   }
 
   start_value (writer, key, type, "base64");
+  XML_CHECK (xmlTextWriterStartAttribute, (writer, BAD_CAST "value"));
   XML_CHECK (xmlTextWriterWriteBase64, (writer, str, 0, len));
+  XML_CHECK (xmlTextWriterEndAttribute, (writer));
   end_value (writer);
 
   return 0;
@@ -272,7 +363,7 @@ value_dword (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
 {
   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
   start_value (writer, key, "int32", NULL);
-  XML_CHECK (xmlTextWriterWriteFormatString, (writer, "%" PRIi32, v));
+  XML_CHECK (xmlTextWriterWriteFormatAttribute, (writer, BAD_CAST "value", "%" PRIi32, v));
   end_value (writer);
   return 0;
 }
@@ -283,7 +374,7 @@ value_qword (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
 {
   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
   start_value (writer, key, "int64", NULL);
-  XML_CHECK (xmlTextWriterWriteFormatString, (writer, "%" PRIi64, v));
+  XML_CHECK (xmlTextWriterWriteFormatAttribute, (writer, BAD_CAST "value", "%" PRIi64, v));
   end_value (writer);
   return 0;
 }
@@ -294,7 +385,9 @@ value_binary (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
 {
   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
   start_value (writer, key, "binary", "base64");
+  XML_CHECK (xmlTextWriterStartAttribute, (writer, BAD_CAST "value"));
   XML_CHECK (xmlTextWriterWriteBase64, (writer, v, 0, len));
+  XML_CHECK (xmlTextWriterEndAttribute, (writer));
   end_value (writer);
   return 0;
 }
@@ -305,7 +398,11 @@ value_none (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
 {
   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
   start_value (writer, key, "none", "base64");
-  if (len > 0) XML_CHECK (xmlTextWriterWriteBase64, (writer, v, 0, len));
+  if (len > 0) {
+    XML_CHECK (xmlTextWriterStartAttribute, (writer, BAD_CAST "value"));
+    XML_CHECK (xmlTextWriterWriteBase64, (writer, v, 0, len));
+    XML_CHECK (xmlTextWriterEndAttribute, (writer));
+  }
   end_value (writer);
   return 0;
 }
@@ -338,7 +435,11 @@ value_other (hive_h *h, void *writer_v, hive_node_h node, hive_value_h value,
   }
 
   start_value (writer, key, type, "base64");
-  if (len > 0) XML_CHECK (xmlTextWriterWriteBase64, (writer, v, 0, len));
+  if (len > 0) {
+    XML_CHECK (xmlTextWriterStartAttribute, (writer, BAD_CAST "value"));
+    XML_CHECK (xmlTextWriterWriteBase64, (writer, v, 0, len));
+    XML_CHECK (xmlTextWriterEndAttribute, (writer));
+  }
   end_value (writer);
 
   return 0;

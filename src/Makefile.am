@@ -1,5 +1,5 @@
 # hivex
-# Copyright (C) 2009-2010 Red Hat Inc.
+# Copyright (C) 2009-2011 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,14 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = gnulib/lib lib images gnulib/tests sh xml po
+# Work around broken libtool.
+export to_tool_file_cmd=func_convert_file_noop
+
+SUBDIRS = gnulib/lib generator lib images gnulib/tests xml po
+
+if HAVE_HIVEXSH
+SUBDIRS += sh
+endif
 
 if HAVE_OCAML
 SUBDIRS += ocaml
@@ -31,22 +38,16 @@ if HAVE_PYTHON
 SUBDIRS += python
 endif
 
+if HAVE_RUBY
+SUBDIRS += ruby
+endif
+
 EXTRA_DIST = hivex.pc hivex.pc.in README LICENSE
 
 # Generate the ChangeLog automatically from the gitlog.
 dist-hook:
 	$(top_srcdir)/build-aux/gitlog-to-changelog > ChangeLog
 	cp ChangeLog $(distdir)/ChangeLog
-
-# Update the list of translatable files in po/POTFILES.in.
-all-local:
-	cd $(srcdir); \
-	find $(DIST_SUBDIRS) \
-	    -name '*.c' -o -name '*.pl' -o -name '*.pm' | \
-	grep -v '^gnulib/' | \
-	grep -v 'perl/blib/' | \
-	LC_ALL=C sort | \
-	sed 's,^\./,,' > po/POTFILES.in
 
 # Pkgconfig.
 pkgconfigdir = $(libdir)/pkgconfig

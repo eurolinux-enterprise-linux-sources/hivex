@@ -31,7 +31,11 @@ AM_CPPFLAGS = \
 
 if HAVE_OCAML
 
-noinst_DATA = mlhivex.cma mlhivex.cmxa META
+noinst_DATA = mlhivex.cma META
+
+if HAVE_OCAMLOPT
+noinst_DATA += mlhivex.cmxa
+endif
 
 OBJS = hivex_c.o hivex.cmo
 XOBJS = $(OBJS:.cmo=.cmx)
@@ -46,7 +50,7 @@ hivex_c.o: hivex_c.c
 	$(CC) $(AM_CPPFLAGS) $(CFLAGS) -fPIC -Wall -c $<
 
 TESTS_ENVIRONMENT = \
-	LD_LIBRARY_PATH=$(top_builddir)/lib/.libs \
+	LD_LIBRARY_PATH=$(top_builddir)/lib/.libs:$(top_builddir)/ocaml \
 	$(VG)
 
 TESTS = \
@@ -59,42 +63,16 @@ TESTS = \
 	t/hivex_300_fold
 noinst_DATA += $(TESTS)
 
-t/hivex_005_load: t/hivex_005_load.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_010_open: t/hivex_010_open.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_020_root: t/hivex_020_root.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_100_errors: t/hivex_100_errors.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_110_gc_handle: t/hivex_110_gc_handle.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_200_write: t/hivex_200_write.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-t/hivex_300_fold: t/hivex_300_fold.cmx mlhivex.cmxa
-	mkdir -p t
-	$(OCAMLFIND) ocamlopt -cclib -L$(top_builddir)/lib/.libs -I . -package unix -linkpkg mlhivex.cmxa $< -o $@
-
-# Need to rebuild the tests from source if the main library has
-# changed at all, otherwise we get inconsistent assumptions.
-t/%.cmx: t/%.ml mlhivex.cmxa
-	$(OCAMLFIND) ocamlopt -package unix -linkpkg -c $< -o $@
+# https://www.redhat.com/archives/libguestfs/2011-May/thread.html#00015
+t/%: t/%.cmo mlhivex.cma
+	$(LIBTOOL) --mode=execute -dlopen $(top_builddir)/lib/libhivex.la \
+	  $(OCAMLFIND) ocamlc -dllpath $(abs_builddir) -package unix \
+	  -linkpkg mlhivex.cma $< -o $@
 
 .mli.cmi:
 	$(OCAMLFIND) ocamlc -package unix -c $< -o $@
 .ml.cmo:
+	mkdir -p `dirname $@`
 	$(OCAMLFIND) ocamlc -package unix -c $< -o $@
 .ml.cmx:
 	$(OCAMLFIND) ocamlopt -package unix -c $< -o $@
@@ -111,13 +89,19 @@ include .depend
 SUFFIXES = .cmo .cmi .cmx .ml .mli .mll .mly
 
 # Do the installation by hand, because we want to run ocamlfind.
+install_files = META *.so *.a *.cma *.cmi $(srcdir)/*.mli
+
+if HAVE_OCAMLOPT
+install_files += *.cmx *.cmxa
+endif
+
 install-data-hook:
 	mkdir -p $(DESTDIR)$(OCAMLLIB)
 	mkdir -p $(DESTDIR)$(OCAMLLIB)/stublibs
 	$(OCAMLFIND) install \
 	  -ldconf ignore -destdir $(DESTDIR)$(OCAMLLIB) \
-	  hivex \
-	  META *.so *.a *.cma *.cmx *.cmxa *.cmi *.mli
+	  $(PACKAGE_NAME) \
+	  $(install_files)
 
 CLEANFILES += $(noinst_DATA)
 

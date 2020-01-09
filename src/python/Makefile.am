@@ -26,7 +26,7 @@ EXTRA_DIST = \
 
 if HAVE_PYTHON
 
-pythondir = $(PYTHON_SITE_PACKAGES)
+pythondir = $(PYTHON_INSTALLDIR)
 
 python_DATA = hivex.py
 
@@ -36,10 +36,13 @@ libhivexmod_la_SOURCES = hivex-py.c
 libhivexmod_la_CFLAGS = -Wall -I$(PYTHON_INCLUDEDIR) \
 		        -I$(top_srcdir)/lib -I$(top_builddir)/lib
 libhivexmod_la_LIBADD = $(top_builddir)/lib/libhivex.la
+libhivexmod_la_LDFLAGS = -avoid-version -shared
 
 TESTS_ENVIRONMENT = \
 	PYTHONPATH=$(builddir):$(builddir)/.libs
 
 TESTS = run-python-tests
+
+CLEANFILES = hivex.pyc
 
 endif

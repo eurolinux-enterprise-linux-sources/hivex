@@ -3,7 +3,7 @@
 #   generator/generator.ml
 # ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
 #
-# Copyright (C) 2009-2010 Red Hat Inc.
+# Copyright (C) 2009-2011 Red Hat Inc.
 # Derived from code by Petter Nordahl-Hagen under a compatible license:
 #   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
 # Derived from code by Markus Stephany under a compatible license:
@@ -104,10 +104,19 @@ sub open {
 
  $node = $h->root ()
 
-Return root node of the hive.  All valid registries must contain
-a root node.
+Return root node of the hive.  All valid hives must contain a root node.
 
 This returns a node handle.
+
+=item last_modified
+
+ $int64 = $h->last_modified ()
+
+Return the modification time from the header of the hive.
+
+The returned value is a Windows filetime.
+To convert this to a Unix C<time_t> see:
+L<http://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux/6161842#6161842>
 
 =item node_name
 
@@ -121,6 +130,16 @@ tool or program that created the hive in the first place).  You can
 only know the "real" name of the root node by knowing which registry
 file this hive originally comes from, which is knowledge that is
 outside the scope of this library.
+
+=item node_timestamp
+
+ $int64 = $h->node_timestamp ($node)
+
+Return the modification time of the node.
+
+The returned value is a Windows filetime.
+To convert this to a Unix C<time_t> see:
+L<http://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux/6161842#6161842>
 
 =item node_children
 
@@ -177,6 +196,20 @@ default key.
 
 This returns a value handle.
 
+=item value_key_len
+
+ $size = $h->value_key_len ($val)
+
+Return the length of the key (name) of a (key, value) pair.  The
+length can legitimately be 0, so errno is the necesary mechanism
+to check for errors.
+
+In the context of Windows Registries, a zero-length name means
+that this value is the default key for this node in the tree.
+This is usually written as C<"@">.
+
+This returns a size.
+
 =item value_key
 
  $string = $h->value_key ($val)
@@ -200,6 +233,22 @@ pair.  See also C<value_value> which returns all this
 information, and the value itself.  Also, C<value_*> functions
 below which can be used to return the value in a more useful form when
 you know the type in advance.
+
+=item node_struct_length
+
+ $size = $h->node_struct_length ($node)
+
+Return the length of the node data structure.
+
+This returns a size.
+
+=item value_struct_length
+
+ $size = $h->value_struct_length ($val)
+
+Return the length of the value data structure.
+
+This returns a size.
 
 =item value_value
 
@@ -298,9 +347,9 @@ values stored at C<node> by passing C<@values = []>.
 
  $h->node_set_value ($node, $val)
 
-This call can be used to replace a single (key, value) pair
-stored in C<node>. If the key does not already exist, then a
-new key is added. Key matching is case insensitive.
+This call can be used to replace a single C<(key, value)> pair
+stored in C<node>.  If the key does not already exist, then a
+new key is added.  Key matching is case insensitive.
 
 C<node> is the node to modify.
 
@@ -312,7 +361,7 @@ C<node> is the node to modify.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2009-2010 Red Hat Inc.
+Copyright (C) 2009-2011 Red Hat Inc.
 
 =head1 LICENSE
 

@@ -2,7 +2,7 @@
    NOTE: getopt is part of the C library, so if you don't know what
    "Keep this file name-space clean" means, talk to drepper@gnu.org
    before changing it!
-   Copyright (C) 1987-1996, 1998-2004, 2006, 2008-2010 Free Software
+   Copyright (C) 1987-1996, 1998-2004, 2006, 2008-2011 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -39,10 +39,6 @@
 
 #if defined _LIBC && defined USE_IN_LIBIO
 # include <wchar.h>
-#endif
-
-#ifndef attribute_hidden
-# define attribute_hidden
 #endif
 
 /* This version of `getopt' appears to the caller like standard Unix `getopt'
@@ -352,8 +348,6 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                     int long_only, struct _getopt_data *d, int posixly_correct)
 {
   int print_errors = d->opterr;
-  if (optstring[0] == ':')
-    print_errors = 0;
 
   if (argc < 1)
     return -1;
@@ -368,6 +362,10 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                                       posixly_correct);
       d->__initialized = 1;
     }
+  else if (optstring[0] == '-' || optstring[0] == '+')
+    optstring++;
+  if (optstring[0] == ':')
+    print_errors = 0;
 
   /* Test whether ARGV[optind] points to a non-option argument.
      Either it does not have option syntax, or there is an environment flag
@@ -481,23 +479,28 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                             || !strchr (optstring, argv[d->optind][1])))))
     {
       char *nameend;
+      unsigned int namelen;
       const struct option *p;
       const struct option *pfound = NULL;
+      struct option_list
+      {
+        const struct option *p;
+        struct option_list *next;
+      } *ambig_list = NULL;
       int exact = 0;
-      int ambig = 0;
       int indfound = -1;
       int option_index;
 
       for (nameend = d->__nextchar; *nameend && *nameend != '='; nameend++)
         /* Do nothing.  */ ;
+      namelen = nameend - d->__nextchar;
 
       /* Test all long options for either exact match
          or abbreviated matches.  */
       for (p = longopts, option_index = 0; p->name; p++, option_index++)
-        if (!strncmp (p->name, d->__nextchar, nameend - d->__nextchar))
+        if (!strncmp (p->name, d->__nextchar, namelen))
           {
-            if ((unsigned int) (nameend - d->__nextchar)
-                == (unsigned int) strlen (p->name))
+            if (namelen == (unsigned int) strlen (p->name))
               {
                 /* Exact match found.  */
                 pfound = p;
@@ -515,41 +518,84 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                      || pfound->has_arg != p->has_arg
                      || pfound->flag != p->flag
                      || pfound->val != p->val)
-              /* Second or later nonexact match found.  */
-              ambig = 1;
+              {
+                /* Second or later nonexact match found.  */
+                struct option_list *newp = malloc (sizeof (*newp));
+                newp->p = p;
+                newp->next = ambig_list;
+                ambig_list = newp;
+              }
           }
 
-      if (ambig && !exact)
+      if (ambig_list != NULL && !exact)
         {
           if (print_errors)
             {
+              struct option_list first;
+              first.p = pfound;
+              first.next = ambig_list;
+              ambig_list = &first;
+
 #if defined _LIBC && defined USE_IN_LIBIO
-              char *buf;
+              char *buf = NULL;
+              size_t buflen = 0;
 
-              if (__asprintf (&buf, _("%s: option '%s' is ambiguous\n"),
-                              argv[0], argv[d->optind]) >= 0)
+              FILE *fp = open_memstream (&buf, &buflen);
+              if (fp != NULL)
                 {
-                  _IO_flockfile (stderr);
+                  fprintf (fp,
+                           _("%s: option '%s' is ambiguous; possibilities:"),
+                           argv[0], argv[d->optind]);
 
-                  int old_flags2 = ((_IO_FILE *) stderr)->_flags2;
-                  ((_IO_FILE *) stderr)->_flags2 |= _IO_FLAGS2_NOTCANCEL;
+                  do
+                    {
+                      fprintf (fp, " '--%s'", ambig_list->p->name);
+                      ambig_list = ambig_list->next;
+                    }
+                  while (ambig_list != NULL);
 
-                  __fxprintf (NULL, "%s", buf);
+                  fputc_unlocked ('\n', fp);
 
-                  ((_IO_FILE *) stderr)->_flags2 = old_flags2;
-                  _IO_funlockfile (stderr);
+                  if (__builtin_expect (fclose (fp) != EOF, 1))
+                    {
+                      _IO_flockfile (stderr);
 
-                  free (buf);
+                      int old_flags2 = ((_IO_FILE *) stderr)->_flags2;
+                      ((_IO_FILE *) stderr)->_flags2 |= _IO_FLAGS2_NOTCANCEL;
+
+                      __fxprintf (NULL, "%s", buf);
+
+                      ((_IO_FILE *) stderr)->_flags2 = old_flags2;
+                      _IO_funlockfile (stderr);
+
+                      free (buf);
+                    }
                 }
 #else
-              fprintf (stderr, _("%s: option '%s' is ambiguous\n"),
+              fprintf (stderr,
+                       _("%s: option '%s' is ambiguous; possibilities:"),
                        argv[0], argv[d->optind]);
+              do
+                {
+                  fprintf (stderr, " '--%s'", ambig_list->p->name);
+                  ambig_list = ambig_list->next;
+                }
+              while (ambig_list != NULL);
+
+              fputc ('\n', stderr);
 #endif
             }
           d->__nextchar += strlen (d->__nextchar);
           d->optind++;
           d->optopt = 0;
           return '?';
+        }
+
+      while (ambig_list != NULL)
+        {
+          struct option_list *pn = ambig_list->next;
+          free (ambig_list);
+          ambig_list = pn;
         }
 
       if (pfound != NULL)
@@ -637,8 +683,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                       char *buf;
 
                       if (__asprintf (&buf, _("\
-%s: option '%s' requires an argument\n"),
-                                      argv[0], argv[d->optind - 1]) >= 0)
+%s: option '--%s' requires an argument\n"),
+                                      argv[0], pfound->name) >= 0)
                         {
                           _IO_flockfile (stderr);
 
@@ -655,8 +701,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                         }
 #else
                       fprintf (stderr,
-                               _("%s: option '%s' requires an argument\n"),
-                               argv[0], argv[d->optind - 1]);
+                               _("%s: option '--%s' requires an argument\n"),
+                               argv[0], pfound->name);
 #endif
                     }
                   d->__nextchar += strlen (d->__nextchar);
@@ -740,13 +786,13 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
 
   {
     char c = *d->__nextchar++;
-    char *temp = strchr (optstring, c);
+    const char *temp = strchr (optstring, c);
 
     /* Increment `optind' when we start to process its last character.  */
     if (*d->__nextchar == '\0')
       ++d->optind;
 
-    if (temp == NULL || c == ':')
+    if (temp == NULL || c == ':' || c == ';')
       {
         if (print_errors)
           {
@@ -792,6 +838,9 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
         int ambig = 0;
         int indfound = 0;
         int option_index;
+
+        if (longopts == NULL)
+          goto no_longs;
 
         /* This is an option that requires an argument.  */
         if (*d->__nextchar != '\0')
@@ -868,7 +917,10 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   pfound = p;
                   indfound = option_index;
                 }
-              else
+              else if (long_only
+                       || pfound->has_arg != p->has_arg
+                       || pfound->flag != p->flag
+                       || pfound->val != p->val)
                 /* Second or later nonexact match found.  */
                 ambig = 1;
             }
@@ -880,7 +932,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                 char *buf;
 
                 if (__asprintf (&buf, _("%s: option '-W %s' is ambiguous\n"),
-                                argv[0], argv[d->optind]) >= 0)
+                                argv[0], d->optarg) >= 0)
                   {
                     _IO_flockfile (stderr);
 
@@ -896,7 +948,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   }
 #else
                 fprintf (stderr, _("%s: option '-W %s' is ambiguous\n"),
-                         argv[0], argv[d->optind]);
+                         argv[0], d->optarg);
 #endif
               }
             d->__nextchar += strlen (d->__nextchar);
@@ -959,8 +1011,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                         char *buf;
 
                         if (__asprintf (&buf, _("\
-%s: option '%s' requires an argument\n"),
-                                        argv[0], argv[d->optind - 1]) >= 0)
+%s: option '-W %s' requires an argument\n"),
+                                        argv[0], pfound->name) >= 0)
                           {
                             _IO_flockfile (stderr);
 
@@ -976,15 +1028,17 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                             free (buf);
                           }
 #else
-                        fprintf (stderr,
-                                 _("%s: option '%s' requires an argument\n"),
-                                 argv[0], argv[d->optind - 1]);
+                        fprintf (stderr, _("\
+%s: option '-W %s' requires an argument\n"),
+                                 argv[0], pfound->name);
 #endif
                       }
                     d->__nextchar += strlen (d->__nextchar);
                     return optstring[0] == ':' ? ':' : '?';
                   }
               }
+            else
+              d->optarg = NULL;
             d->__nextchar += strlen (d->__nextchar);
             if (longind != NULL)
               *longind = option_index;
@@ -995,8 +1049,10 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
               }
             return pfound->val;
           }
-          d->__nextchar = NULL;
-          return 'W';   /* Let the application handle it.   */
+
+      no_longs:
+        d->__nextchar = NULL;
+        return 'W';   /* Let the application handle it.   */
       }
     if (temp[1] == ':')
       {

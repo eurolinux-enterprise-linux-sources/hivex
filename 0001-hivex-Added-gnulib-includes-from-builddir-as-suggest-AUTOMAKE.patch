@@ -1,0 +1,53 @@
+diff -ur hivex-1.3.3.old/lib/Makefile.in hivex-1.3.3/lib/Makefile.in
+--- hivex-1.3.3.old/lib/Makefile.in	2011-11-29 11:06:39.000000000 +0000
++++ hivex-1.3.3/lib/Makefile.in	2011-12-20 19:08:45.646905633 +0000
+@@ -1045,7 +1044,11 @@
+ 	$(LTLIBTHREAD)
+ 
+ libhivex_la_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+-libhivex_la_CPPFLAGS = -I$(top_srcdir)/gnulib/lib -I$(srcdir)
++libhivex_la_CPPFLAGS = \
++  -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
++  -I$(srcdir)
++
+ include_HEADERS = hivex.h
+ man_MANS = hivex.3
+ noinst_DATA = \
+diff -ur hivex-1.3.3.old/sh/Makefile.in hivex-1.3.3/sh/Makefile.in
+--- hivex-1.3.3.old/sh/Makefile.in	2011-11-29 11:06:40.000000000 +0000
++++ hivex-1.3.3/sh/Makefile.in	2011-12-20 19:08:46.494906630 +0000
+@@ -995,6 +994,7 @@
+ hivexsh_LDADD = ../lib/libhivex.la ../gnulib/lib/libgnu.la $(LIBREADLINE)
+ hivexsh_CFLAGS = \
+   -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
+   -I$(top_srcdir)/lib \
+   -DLOCALEBASEDIR=\""$(datadir)/locale"\" \
+   $(WARN_CFLAGS) $(WERROR_CFLAGS)
+diff -ur hivex-1.3.3.old/xml/Makefile.in hivex-1.3.3/xml/Makefile.in
+--- hivex-1.3.3.old/xml/Makefile.in	2011-11-29 11:06:40.000000000 +0000
++++ hivex-1.3.3/xml/Makefile.in	2011-12-20 19:08:46.627906865 +0000
+@@ -119,7 +119,8 @@
+ am_hivexml_OBJECTS = hivexml-hivexml.$(OBJEXT)
+ hivexml_OBJECTS = $(am_hivexml_OBJECTS)
+ am__DEPENDENCIES_1 =
+-hivexml_DEPENDENCIES = ../lib/libhivex.la $(am__DEPENDENCIES_1)
++hivexml_DEPENDENCIES = ../lib/libhivex.la ../gnulib/lib/libgnu.la \
++	$(am__DEPENDENCIES_1)
+ AM_V_lt = $(am__v_lt_$(V))
+ am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+ am__v_lt_0 = --silent
+@@ -976,10 +976,11 @@
+ hivexml_SOURCES = \
+   hivexml.c
+ 
+-hivexml_LDADD = ../lib/libhivex.la $(LIBXML2_LIBS)
++hivexml_LDADD = ../lib/libhivex.la ../gnulib/lib/libgnu.la $(LIBXML2_LIBS)
+ hivexml_CFLAGS = \
+   -DLOCALEBASEDIR=\""$(datadir)/locale"\" \
+   -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
+   -I$(top_srcdir)/lib \
+   $(LIBXML2_CFLAGS) \
+   $(WARN_CFLAGS) $(WERROR_CFLAGS)

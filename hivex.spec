@@ -1,13 +1,12 @@
 Name:           hivex
-Version:        1.2.4
-Release:        3%{?dist}
+Version:        1.3.3
+Release:        4.2%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 Group:          Development/Libraries
 License:        LGPLv2
 URL:            http://libguestfs.org/
 Source0:        http://libguestfs.org/download/hivex/%{name}-%{version}.tar.gz
-Patch0:         %{name}-1.2.3-dirs.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Doesn't build on s390 because of lack of OCaml.  Actually, OCaml
@@ -25,6 +24,8 @@ BuildRequires:  perl-libintl
 BuildRequires:  ocaml
 BuildRequires:  ocaml-findlib-devel
 BuildRequires:  python-devel
+#BuildRequires:  ruby-devel
+#BuildRequires:  rubygem-rake
 BuildRequires:  readline-devel
 BuildRequires:  libxml2-devel
 
@@ -32,10 +33,19 @@ BuildRequires:  libxml2-devel
 # the old version of libguestfs that included this library:
 Conflicts:      libguestfs <= 1:1.0.84
 
+# Fix Perl directory install path.
+Patch0:         %{name}-1.2.3-dirs.patch
+
+# Upstream patches.
+Patch1:         0001-hivexml-Remove-unused-variable.patch
+Patch2:         0001-hivex-Added-gnulib-includes-from-builddir-as-suggest.patch
+Patch3:         0001-hivex-Added-gnulib-includes-from-builddir-as-suggest-AUTOMAKE.patch
+Patch4:         0001-patch-for-read-support-of-li-records-from-ri-interme.patch
+
 
 %description
-Hive files are the undocumented binary blobs that Windows uses to
-store the Windows Registry on disk.  Hivex is a library that can read
+Hive files are undocumented binary files that Windows uses to store
+the Windows Registry on the disk.  Hivex is a library that can read
 and write to these files.
 
 'hivexsh' is a shell you can use to interactively navigate a hive
@@ -123,12 +133,21 @@ python-%{name} contains Python bindings for %{name}.
 
 %prep
 %setup -q
+
 %patch0 -p1 -b .dirs
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
 
 
 %build
 %configure --disable-static
 make %{?_smp_mflags}
+
+
+%check
+make check
 
 
 %install
@@ -144,15 +163,10 @@ find $RPM_BUILD_ROOT -name .packlist -delete
 find $RPM_BUILD_ROOT -name '*.bs' -delete
 
 # Remove unwanted Python files:
-#rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.a
 rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
 
-# Only install unversioned *.so file for Python bindings.
-rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so
-mv $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so.0.0.0 \
-   $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so
-rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so.0*
-
+# configure can't --disable-ruby, so remove Ruby files instead.
+find $RPM_BUILD_ROOT -name 'ruby' -a -type d | xargs rm -rf
 
 %find_lang %{name}
 
@@ -225,6 +239,18 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Oct 11 2012 Richard W.M. Jones <rjones@redhat.com> - 1.3.3-4.2
+- Remove loaded text from description
+  resolves: rhbz#822741
+- Add patch to fix parsing of hives that contain large ri-records
+  resolves: rhbz#841924
+
+* Tue Dec 20 2011 Richard W.M. Jones <rjones@redhat.com> - 1.3.3-4
+- Rebase to upstream version 1.3.3
+  resolves: rhbz#734208
+- Add upstream patch: hivexml: Remove unused variable.
+- Add upstream patch: hivex: Added gnulib includes from builddir [...]
+
 * Fri Jan 14 2011 Richard W.M. Jones <rjones@redhat.com> - 1.2.4-3
 - Fix multilib conflicts in *.pyc and *.pyo files.
 - Only install unversioned *.so file for Python bindings.

@@ -1,0 +1,24 @@
+From 233ac984022eefe5893c63893e2b7cd0c31190ce Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Tue, 20 Dec 2011 18:46:26 +0000
+Subject: [PATCH] hivexml: Remove unused variable.
+
+---
+ xml/hivexml.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
+
+diff --git a/xml/hivexml.c b/xml/hivexml.c
+index d38e9d4..54d9049 100644
+--- a/xml/hivexml.c
++++ b/xml/hivexml.c
+@@ -215,7 +215,6 @@ node_start (hive_h *h, void *writer_v, hive_node_h node, const char *name)
+ {
+   int64_t last_modified;
+   char *timebuf;
+-  int ret = 0;
+ 
+   xmlTextWriterPtr writer = (xmlTextWriterPtr) writer_v;
+   XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "node"));
+-- 
+1.7.6
+

@@ -3,7 +3,7 @@
  *   generator/generator.ml
  * ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
  *
- * Copyright (C) 2009-2010 Red Hat Inc.
+ * Copyright (C) 2009-2011 Red Hat Inc.
  * Derived from code by Petter Nordahl-Hagen under a compatible license:
  *   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
  * Derived from code by Markus Stephany under a compatible license:
@@ -30,10 +30,7 @@
 
 #include <string.h>
 #include <hivex.h>
-
-#ifndef PRId64
-#define PRId64 "lld"
-#endif
+#include <inttypes.h>
 
 static SV *
 my_newSVll(long long val) {
@@ -46,10 +43,6 @@ my_newSVll(long long val) {
   return newSVpv(buf, len);
 #endif
 }
-
-#ifndef PRIu64
-#define PRIu64 "llu"
-#endif
 
 #if 0
 static SV *
@@ -217,6 +210,20 @@ PREINIT:
       RETVAL
 
 SV *
+last_modified (h)
+      hive_h *h;
+PREINIT:
+      int64_t r;
+   CODE:
+      errno = 0;
+      r = hivex_last_modified (h);
+      if (r == -1 && errno != 0)
+        croak ("%s: %s", "last_modified", strerror (errno));
+      RETVAL = my_newSVll (r);
+ OUTPUT:
+      RETVAL
+
+SV *
 node_name (h, node)
       hive_h *h;
       int node;
@@ -228,6 +235,21 @@ PREINIT:
         croak ("%s: %s", "node_name", strerror (errno));
       RETVAL = newSVpv (r, 0);
       free (r);
+ OUTPUT:
+      RETVAL
+
+SV *
+node_timestamp (h, node)
+      hive_h *h;
+      int node;
+PREINIT:
+      int64_t r;
+   CODE:
+      errno = 0;
+      r = hivex_node_timestamp (h, node);
+      if (r == -1 && errno != 0)
+        croak ("%s: %s", "node_timestamp", strerror (errno));
+      RETVAL = my_newSVll (r);
  OUTPUT:
       RETVAL
 
@@ -318,6 +340,22 @@ PREINIT:
       RETVAL
 
 SV *
+value_key_len (h, val)
+      hive_h *h;
+      int val;
+PREINIT:
+      /* hive_node_h = hive_value_h = size_t so we cheat
+         here to simplify the generator */
+      size_t r;
+   CODE:
+      r = hivex_value_key_len (h, val);
+      if (r == 0)
+        croak ("%s: %s", "value_key_len", strerror (errno));
+      RETVAL = newSViv (r);
+ OUTPUT:
+      RETVAL
+
+SV *
 value_key (h, val)
       hive_h *h;
       int val;
@@ -347,6 +385,38 @@ PREINIT:
       EXTEND (SP, 2);
       PUSHs (sv_2mortal (newSViv (type)));
       PUSHs (sv_2mortal (newSViv (len)));
+
+SV *
+node_struct_length (h, node)
+      hive_h *h;
+      int node;
+PREINIT:
+      /* hive_node_h = hive_value_h = size_t so we cheat
+         here to simplify the generator */
+      size_t r;
+   CODE:
+      r = hivex_node_struct_length (h, node);
+      if (r == 0)
+        croak ("%s: %s", "node_struct_length", strerror (errno));
+      RETVAL = newSViv (r);
+ OUTPUT:
+      RETVAL
+
+SV *
+value_struct_length (h, val)
+      hive_h *h;
+      int val;
+PREINIT:
+      /* hive_node_h = hive_value_h = size_t so we cheat
+         here to simplify the generator */
+      size_t r;
+   CODE:
+      r = hivex_value_struct_length (h, val);
+      if (r == 0)
+        croak ("%s: %s", "value_struct_length", strerror (errno));
+      RETVAL = newSViv (r);
+ OUTPUT:
+      RETVAL
 
 void
 value_value (h, val)

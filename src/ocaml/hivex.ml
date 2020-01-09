@@ -3,7 +3,7 @@
  *   generator/generator.ml
  * ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
  *
- * Copyright (C) 2009-2010 Red Hat Inc.
+ * Copyright (C) 2009-2011 Red Hat Inc.
  * Derived from code by Petter Nordahl-Hagen under a compatible license:
  *   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
  * Derived from code by Markus Stephany under a compatible license:
@@ -66,14 +66,19 @@ type set_value = {
 external open_file : string -> open_flag list -> t = "ocaml_hivex_open"
 external close : t -> unit = "ocaml_hivex_close"
 external root : t -> node = "ocaml_hivex_root"
+external last_modified : t -> int64 = "ocaml_hivex_last_modified"
 external node_name : t -> node -> string = "ocaml_hivex_node_name"
+external node_timestamp : t -> node -> int64 = "ocaml_hivex_node_timestamp"
 external node_children : t -> node -> node array = "ocaml_hivex_node_children"
 external node_get_child : t -> node -> string -> node = "ocaml_hivex_node_get_child"
 external node_parent : t -> node -> node = "ocaml_hivex_node_parent"
 external node_values : t -> node -> value array = "ocaml_hivex_node_values"
 external node_get_value : t -> node -> string -> value = "ocaml_hivex_node_get_value"
+external value_key_len : t -> value -> int64 = "ocaml_hivex_value_key_len"
 external value_key : t -> value -> string = "ocaml_hivex_value_key"
 external value_type : t -> value -> hive_type * int = "ocaml_hivex_value_type"
+external node_struct_length : t -> node -> int64 = "ocaml_hivex_node_struct_length"
+external value_struct_length : t -> value -> int64 = "ocaml_hivex_value_struct_length"
 external value_value : t -> value -> hive_type * string = "ocaml_hivex_value_value"
 external value_string : t -> value -> string = "ocaml_hivex_value_string"
 external value_multiple_strings : t -> value -> string array = "ocaml_hivex_value_multiple_strings"

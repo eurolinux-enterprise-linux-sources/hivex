@@ -1,3 +1,559 @@
+2011-11-29  Richard W.M. Jones  <rjones@redhat.com>
+
+	Update to latest gnulib (RHBZ#756981).
+
+	Revert "out of tree build: ruby"
+	This reverts commit 48d2e0d9ea5c12ae81f31706fa463f8e1ebd09af.
+
+	This commit breaks the ordinary build:
+
+	make[2]: Entering directory `/home/rjones/d/hivex/ruby'
+	rake build
+	rake/rdoctask is deprecated.  Use rdoc/task instead (in RDoc 2.4.2+)
+	rake/gempackagetask is deprecated.  Use rubygems/package_task instead
+	top_srcdir=$(pwd)/..; top_builddir=$(pwd)/..; export ARCHFLAGS="-arch $(uname -m)"; mkdir -p ./ext/guestfs; cd ./hivex; ruby #(EXT_CONF} --with-_hivex-include=$top_srcdir/lib --with-_hivex-lib=$top_builddir/lib/.libs
+	sh: line 0: cd: ./hivex: No such file or directory
+
+2011-11-22  Hilko Bengen  <bengen@hilluzination.de>
+
+	out of tree build: ruby
+
+2011-11-19  Richard W.M. Jones  <rjones@redhat.com>
+
+	python: Support Python 3 (RHBZ#752916).
+
+2011-10-24  Richard W.M. Jones  <rjones@redhat.com>
+
+	Fix conditional test for HAVE_HIVEXSH.
+	This fixes commit 0a28041f4156878a74543966f9a72ed3d214ba44.
+
+	Version 1.3.2.
+
+2011-10-22  Richard W.M. Jones  <rjones@redhat.com>
+
+	regedit: Fix syntax for deleting registry keys (RHBZ#737944).
+	Previously we parsed -[...] to delete a registry key, but this is not
+	correct.  It should be [-...].  Reference:
+
+	http://support.microsoft.com/kb/310516
+	https://secure.wikimedia.org/wikipedia/en/wiki/Windows_Registry#.REG_files
+
+2011-09-22  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	hivexml: Do not print null input times
+	Dealing with "1601-01-01T00:00:00Z" is unnecessarily awkward, especially
+	since the value only represents a 0 found in the data.
+
+2011-09-07  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	hivexsh: Conditionally build for Mac OS X
+	OS X lacks open_memstream, causing hivexsh to fail to build.  This patch
+	defines HAVE_HIVEXSH, setting the only condition to open_memstream
+	existence.
+
+2011-09-07  Gillen Daniel  <gillen.daniel@gmail.com>
+
+	Replacement mmap function for Win32.
+	(Updates by RWMJ)
+
+2011-09-07  Richard W.M. Jones  <rjones@redhat.com>
+
+	Add an internal hivex header file.
+
+	hivexml: Add correct casts to xmlTextWriter* function call params.
+	This fixes commit 7ab64739391d60a52755250e76b0f4a03878a7e8.
+
+2011-09-06  Richard W.M. Jones  <rjones@redhat.com>
+
+	Don't include "Returns ..." in function description.
+	The description of what it returns is already produced by the
+	generator.
+
+	This fixes commit e85b1eaa268caea316f6aa8e02738b3d94297250.
+
+2011-09-06  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	hivexml: Report attributes in values instead of text.
+	Reporting value data in attributes has two advantages:
+	* The output of hivexml breaks Python expat processing if binary data
+	makes it out.  This was observed in Software hives.
+	* Not having child text makes room for child elements.
+
+	hivex: Add metadata length functions for nodes and values
+	This patch adds hivex_node_struct_length and hivex_value_struct_length
+	to the hivex ABI, to report the amount of hive space used for each
+	stored structure.
+
+
+	A fix added by RWMJ.
+
+	hivex: Split value_key function into value_key and value_key_len
+	This function breaks the value name calculation out so the name does
+	not need to be fetched and immediately thrown away when one only needs
+	the name.
+
+
+	RWMJ fixed hivex_value_key handling of errno.
+
+	generator: Add new return type to ABI: RSize
+	This patch adds RSize, similar to RNode and RValue.
+
+
+	OCaml bindings fixed by RWMJ.
+
+2011-09-06  Richard W.M. Jones  <rjones@redhat.com>
+
+	Include libintl.h to silence warning about bindtextdomain, textdomain.
+
+2011-09-06  Gillen Daniel  <gillen.daniel@gmail.com>
+
+	lib/byte_conversions.h: Use bswap* functions instead of __bswap* functions.
+
+2011-09-06  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	Mac OS X: Run glibtoolize in absence of libtoolize
+
+	Mac OS X: setlocale function requires locale.h
+	In the style of libguestfs commit:
+	9e397cc16be51f4f3940c7a5b90d0bc43f3f13a8
+
+	Mac OS X: Detect bindtextdomain
+	In the style of libguestfs commit:
+	7581672c7893fd392ca10b47f044af327011f502
+
+2011-08-31  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	ocaml: Fix binding for Hivex.value_type
+
+2011-08-26  Richard W.M. Jones  <rjones@redhat.com>
+
+	Version 1.3.1.
+
+2011-08-24  Hilko Bengen  <bengen@hilluzination.de>
+
+	hivex: Newer Python versions want parentheses around arguments of "print"
+
+	hivex: Fix building on platforms without O_CLOEXEC such as FreeBSD
+
+	hivex: Don't build static library, .so.* symlinks for Python bindings
+
+2011-08-16  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	hivexml: Add root attribute to the root node
+	New feature:  If the root node of the XML root is the hive root node,
+	denote with attribute/value root="1".
+
+2011-08-15  Richard W.M. Jones  <rjones@redhat.com>
+
+	ruby: Test against locally built library.
+
+	Prevent warning about unused variable in test.
+
+	Fix incorrect printf format specifier in error string.
+
+	hivex(3): Fix link to CSS.
+
+	Version 1.3.0.
+
+	Add Ruby bindings.
+
+	header: Fix including just <hivex.h>.
+	Also this adds a regression test so we don't break it in future.
+
+2011-08-13  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	Report last-modified time of hive root and nodes
+	The infrastructure for modified-time reporting has been essentially
+	unused.  These changes report the registry time by treating the
+	time fields as Windows filetime fields stored in little-Endian
+	(which means they can be treated as a single 64-bit little-Endian
+	integer).
+
+	This patch adds to the hivex ABI:
+
+	 * int64_t hivex_last_modified (hive_h *)
+	 * int64_t hivex_node_timestamp (hive_h *, hive_node_h)
+
+	These two functions return the hive's last-modified time and
+	a particular node's last-modified time, respectively.  Credit
+	to Richard Jones for the ABI suggestion, and for the tip on
+	Microsoft's filetime time span.
+
+	hivexml employs these two functions to produce mtime elements
+	for a hive and all of its nodes, producing ISO-8601 formatted
+	time.
+
+
+	A lot of code cleanup by RWMJ.
+
+2011-08-12  Richard W.M. Jones  <rjones@redhat.com>
+
+	Version 1.2.8.
+	Pushed and pulled translations from Transifex.
+
+2011-08-12  Hilko Bengen  <bengen@hilluzination.de>
+
+	More changes needed separate builddir
+	This patch hopefully fixes building and installing the OCaml bindings
+	both in-tree and out-of-tree.
+
+	-Hilko
+
+	More changes needed separate builddir
+	Here's the fix for perl. Both in-tree and out-of-tree build and install
+	worked.
+
+	-Hilko
+
+2011-08-11  Hilko Bengen  <bengen@hilluzination.de>
+
+	hivex: A few tweaks to enable building in a separate directory
+	A couple of fixes by RWMJ so it still works in the same directory case.
+
+2011-08-11  Alex Nelson  <ajnelson@cs.ucsc.edu>
+
+	Correct 32-bit to 64-bit call
+
+2011-07-22  Richard W.M. Jones  <rjones@redhat.com>
+
+	perl: Fix CCFLAGS on Perl 5.14.
+	A change to ExtUtils::CBuilder in Perl 5.14 causes CCFLAGS to
+	completely replace, rather than appending, the C flags.
+
+	The unfortunate consequence of this is that vital flags such as
+	-D_FILE_OFFSET_BITS=64 are missing.  For 32 bit code, this means you
+	get binary-incompatible code that completely fails to load.
+
+	For further analysis see:
+
+	http://www.nntp.perl.org/group/perl.perl5.porters/2011/04/msg171535.html
+
+	This commit changes CCFLAGS so that it appends to the existing
+	$Config{ccflags} instead of replacing it.  On earlier versions of Perl
+	this means we get two copies of the flags, which is unfortunate but
+	should be safe.
+
+	Also, ignore MYMETA.yml file produced by Perl 5.14.
+
+2011-07-11  Michael Huang  <Michael.Huang@visionsolutions.com>
+
+	Close the file descriptor along the writable path.
+	Since the file has been completely read into memory, there is no
+	reason to keep the file descriptor open.
+
+2011-06-29  Richard W.M. Jones  <rjones@redhat.com>
+
+	Sort m4/.gitignore file.
+
+2011-06-29  Jim Meyering  <jim@meyering.net>
+
+	maint: add cfg.mk to prepare for syntax-check tests
+	* cfg.mk: New file, to tell maint.mk which syntax-checks to skip
+	for now, where .gnulib/ is, to exempt images/minimal from
+	one of the tests and to exempt sh/hivexsh\.pod from another.
+	Also exempt lib/gettext.h from sc_useless_cpp_parens.
+
+2011-06-28  Jim Meyering  <meyering@redhat.com>
+
+	maint: remove rule that generated po/POTFILES.in
+	* Makefile.am (all-local): Remove rule.  It would put many
+	files in po/POTFILES.in that contain no translatable diagnostic.
+
+	build: update gnulib submodule to latest
+
+	maint: remove spaces before TAB
+	* perl/typemap: Remove spaces-before-TAB.
+
+	maint: avoid using test's -a and -o operators; they are not portable
+	* configure.ac: use "test C1 && test C2", not "test C1 -a C2";
+	* autogen.sh: Likewise.
+	* sh/hivexget: Use "test C1 || test C2", not "test C1 -o C2"
+
+	maint: use "test x = x", not "test x == x"
+	* autogen.sh: Using "test x = x" is more portable.
+
+	maint: remove trailing blanks
+
+	maint: remove now-unnecessary #ifdef HAVE_BYTESWAP_H guard
+	* lib/byte_conversions.h: Remove #ifdef HAVE_BYTESWAP_H guard.
+	With gnulib, we're guaranteed to have that header file.
+	* bootstrap (modules): Use the byteswap module.
+
+	maint: remove definition of O_CLOEXEC, ...
+	now that we're using gnulib's fcntl module, which ensures
+	that we use a conforming <fcntl.h>.
+	* lib/hivex.c (O_CLOEXEC): Remove definition.
+	* bootstrap (modules): Add fcntl for its guaranteed definition
+	of O_CLOEXEC.
+
+	maint: normalize to exactly one newline at EOF
+	* .tx/config: Remove trailing empty line.
+	* images/Makefile.am: Likewise.
+	* sh/example1: Add newline at EOF.
+	* sh/example2: Likewise.
+	* sh/example3: Likewise.
+	* sh/example4: Likewise.
+	* sh/example5: Likewise.
+
+	maint: update po/POTFILES.in
+	* po/POTFILES.in: Reduce list of files with translatable messages
+	to match reality.
+
+	maint: remove definitions of PRId64 and PRIu64, ...
+	now that we're using gnulib's inttypes module, which ensures
+	that we use a conforming <inttypes.h>.
+	* bootstrap (modules): Add inttypes.
+	* generator/generator.ml (generate_perl_xs) [PRId64, PRIu64]:
+	Don't define these symbols.  Instead, ...
+	Include <inttypes.h>.
+
+	maint: remove unnecessary test-before-free
+	* lib/hivex.c (hivex_node_set_value): Remove unnecessary
+	test-before-free.
+
+2011-05-17  Richard W.M. Jones  <rjones@redhat.com>
+
+	ocaml: Really fix 'make install' rule.
+	This fixes commit b8ad15031cacf910634b4f4f4632232949c4acd2
+	and commit f408b757b1d75429fae5fa7630a4fc5451844de7.
+
+	ocaml: Set package name when installing native bindings.
+	This fixes commit b8ad15031cacf910634b4f4f4632232949c4acd2.
+
+	Version 1.2.7.
+
+	Update gnulib to latest version.
+
+	hivexregedit: Add --unsafe-printable-strings option.
+
+2011-05-13  Richard W.M. Jones  <rjones@redhat.com>
+
+	hivex_root: Return errno == HIVEX_NO_KEY when root key is missing.
+	Previously we returned errno == ENOKEY.  However this was an
+	unfortunate choice of error code since it is not defined in POSIX.  As
+	a result it is missing on several platforms.
+
+	HIVEX_NO_KEY is defined as ENOKEY on platforms where this symbol
+	exists (thus maintaining backwards ABI compatibility), and defined as
+	another POSIX error code otherwise.
+
+2011-05-13  Hilko Bengen  <bengen@hilluzination.de>
+
+	hivex: Fix install target for systems without native OCaml compiler
+	,----
+	| ocamlfind install \
+	|           -ldconf ignore -destdir /build/buildd-hivex_1.2.6-1-ia64-iqcb38/hivex-1.2.6/debian/tmp/usr/lib/ocaml \
+	|           hivex \
+	|           META *.so *.a *.cma *.cmx *.cmxa *.cmi *.mli
+	| Installed /build/buildd-hivex_1.2.6-1-ia64-iqcb38/hivex-1.2.6/debian/tmp/usr/lib/ocaml/hivex/hivex.mli
+	| Installed /build/buildd-hivex_1.2.6-1-ia64-iqcb38/hivex-1.2.6/debian/tmp/usr/lib/ocaml/hivex/hivex.cmi
+	| ocamlfind: *.cmxa: No such file or directory
+	| make[4]: *** [install-data-hook] Error 2
+	`----
+
+	hivex: Remove python bytecode on "make clean"
+
+2011-05-12  Richard W.M. Jones  <rjones@redhat.com>
+
+	ocaml: Use libtool to get correct library to build OCaml tests.
+	See this thread:
+	https://www.redhat.com/archives/libguestfs/2011-May/thread.html#00015
+
+	Thanks to Hilko Bengen and Török Edwin for coming up with this fix.
+
+	Version 1.2.6.
+
+	build: Workaround broken libtool.
+	Same as this error:
+	https://www.redhat.com/archives/libguestfs/2011-April/msg00042.html
+	https://www.redhat.com/archives/libguestfs/2011-May/msg00041.html
+
+	We don't know why latest libtool is so obviously broken, but this
+	works around the problem.
+
+	bootstrap: Force gnulib-tool --libtool option.
+	This forces the recent gnulib to generate a libgnu.la file.  Otherwise
+	it appears to default to --no-libtool which doesn't generate one.
+
+	configure: AC_PROG_LIBTOOL -> AM_PROG_LIBTOOL.
+	Unclear if this makes any difference.
+
+	Update gnulib.
+
+2011-05-12  Hilko Bengen  <bengen@hilluzination.de>
+
+	hivex: Fix for endianess bug.
+	* Richard W.M. Jones:
+	> > Both size_t and int are 32 bit values.  An endianess issue, maybe?
+	> I guess it might be.  We're supposed to be doing le32toh / be32toh
+	> everywhere as appropriate, but we might be missing one.  The code is
+	> mainly tested on little endian arches.
+
+	Found it.
+
+	Now "make check" completes successfully on Sparc and PowerPC.
+
+	hivex: check for presence of OCaml native compiler
+	Only compile bytecode otherwise, avoiding ocamlfind's helpful error
+	message "ocamlfind: Not supported in your configuration: ocamlopt"
+
+	(Successfully tested on Debian/unstable on alpha)
+
+	hivex: Use OCaml bytecode compiler for caml_raise_with_args check
+	On installations where no native OCaml compiler is available, the
+	test program can't be compiled and so we get this message:
+
+	,----
+	| checking for function caml_raise_with_args... not found
+	`----
+
+	This breaks building of the OCaml bindings.
+
+	,----
+	| gcc -std=gnu99 -I.. -I/usr/lib/ocaml -I../ocaml -I../lib   -g -O2 -fPIC -Wall -c hivex_c.c
+	| hivex_c.c:52: error: static declaration of 'caml_raise_with_args' follows non-static declaration
+	| /usr/lib/ocaml/caml/fail.h:30: note: previous declaration of 'caml_raise_with_args' was here
+	| make[2]: *** [hivex_c.o] Error 1
+	`----
+
+	(Successfully tested on Debian/unstable on alpha)
+
+2011-05-12  Richard W.M. Jones  <rjones@redhat.com>
+
+	configure: Use Python platform-dependent site-packages.
+	This updates commit b808c875a34e62fcdf360534f923d6030590ff44.
+
+2011-05-09  Hilko Bengen  <bengen@hilluzination.de>
+
+	Use Python's distutils to determine include and site-packages directories.
+	The code has been taken from specifically ac_python_devel.m4 published
+	at <http://ac-archive.sf.net/>, it has turned out to be less
+	error-prone on my Debian system.
+
+	Don't rely on OCaml native compiler for tests
+	This should make it possible to build useful OCaml bindings on
+	architectures other than i386 and amd64 (Debian bug #589809).
+
+2011-04-28  Richard W.M. Jones  <rjones@redhat.com>
+
+	Include generator in the tarball.
+
+2011-04-28  Hilko Bengen  <bengen@hilluzination.de>
+
+	hivex/python fix for i386 integer size issue
+	Hi,
+
+	While working on Debian packages of hivex 1.2.5, I came across a test
+	failure for the Python bindings with Python 2.7 on the i386
+	architecture. (The tests ran fine on amd64.)
+
+	,----
+	| $ make -C python check
+	| make[1]: Entering directory `/home/bengen/src/deb/hivex/hivex.git/python'
+	| 010-import.py
+	| 020-open.py
+	| 021-close.py
+	| 200-write.py
+	| python: hivex-py.c:52: get_handle: Assertion `obj' failed.
+	`----
+
+	I narrowed this down to hivex-py.c:py_hivex_node_add_child():
+
+	The call
+
+	,----
+	| PyArg_ParseTuple (args, (char *) "OLs:hivex_node_add_child",
+	|                         &py_h, &parent, &name)
+	`----
+
+	results in `py_h' set to NULL, though Python's documentation claims that
+	this cannot happen. I think this happens because `parent' is declared a
+	`long int', but "L" in the format string corresponds to a `long long'.
+	On amd64, they have the same size, but on i386 they don't, so the
+	PyObject pointer is written to the wrong address.
+
+	Please consider applying the patch below which just changes the format
+	string. After regenerating hivex-py.c, I have successfully tested the
+	1.2.5 code base on both architectures.
+
+	Cheers,
+	-Hilko
+
+2011-04-13  Jim Meyering  <meyering@redhat.com>
+
+	maint: Split long lines.
+	* lib/hivex.c: Split lines longer than 80 columns.
+
+2011-04-13  Richard W.M. Jones  <rjones@redhat.com>
+
+	Version 1.2.5.
+	Updated PO files.
+
+	Remove no longer used internal function utf16_string_len_in_bytes.
+
+	hivex_value_multiple_strings: Don't read uninitialized data.
+	If hivex_value_multiple_strings was given a value which had an odd
+	length or if the data in the value was unterminated,
+	hivex_value_multiple_strings could read uninitialized data.
+
+	Potentially (although very unlikely) this could cause a
+	non-exploitable segfault in the calling program.
+
+	Handle odd-length "UTF16" strings.
+	If the length of the buffer is not even, then this would read a byte
+	of uninitialized data.  Fix the length check to avoid this.
+
+	Return real length of buffer from hivex_value_value.
+	In real registries, often the length declared in the header does not
+	match the length of the block.  In this case hivex_value_value would
+	only allocate a value with a size which is the shorter of the two
+	length values, which is correct and safe.
+
+	However user code could do:
+
+	  buf = hivex_value_value (h, v, &t, &len);
+	  memcpy (somewhere, buf, len);
+
+	which would copy uninitialized data.
+
+	If hivex_value_value truncates a value like this, we also need to
+	return the shorter length to the user as well.
+
+	Really fix the case where a UTF-16 string contains junk after the string.
+	The previous commit b71b88f588f8660935a7d462e97b84aa2d669249 attempted
+	to fix this, but got the test the wrong way round so the length would
+	never be shorter.
+
+2011-04-12  Richard W.M. Jones  <rjones@redhat.com>
+
+	Fix use-after-free in hivex_close.
+	Found using valgrind.
+
+2011-04-02  Richard W.M. Jones  <rjones@redhat.com>
+
+	Pull translations from Transifex.
+
+2011-04-01  Richard W.M. Jones  <rjones@redhat.com>
+
+	debian: Fix python test script for bash.
+
+2011-03-07  Richard W.M. Jones  <rjones@redhat.com>
+
+	Import hivex into transifex.
+	http://www.transifex.net/projects/p/hivex/
+
+2010-12-23  Richard W.M. Jones  <rjones@redhat.com>
+
+	Refresh documentation.
+
+2010-12-16  Richard W.M. Jones  <rjones@redhat.com>
+
+	ocaml: Fix segfault in Hivex.value_value binding.
+
+2010-12-02  Richard W.M. Jones  <rjones@redhat.com>
+
+	Version 1.2.4.
+
 2010-11-28  Richard W.M. Jones  <rjones@redhat.com>
 
 	Python bindings.

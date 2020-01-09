@@ -1,0 +1,98 @@
+From daceaebf6a094a68ba6310fdcf1ae64d449b7c49 Mon Sep 17 00:00:00 2001
+From: Hilko Bengen <bengen@hilluzination.de>
+Date: Thu, 1 Dec 2011 00:30:10 +0100
+Subject: [PATCH] hivex: Added gnulib includes from builddir, as suggested by
+ the Gnulib documentation; link hivexml against libgnu.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+    Since some modules (`getopt', for example) may copy files
+    into the build directory, `top_builddir/lib' is needed as well as
+    `top_srcdir/lib'. -- GNU Gnulib manual, section 2.2 Initial import
+
+This fixes an in-tree build failure on a Debian/sid system (see
+below). hivexml could be built out-of-tree, but it turned out that due
+to a missing include path, in this case the system's getopt
+implementation was used insted of Gnulib's.
+
+make[2]: Entering directory `«SRCDIR»/xml'
+gcc -std=gnu99 -DHAVE_CONFIG_H -I. -I..    -DLOCALEBASEDIR=\""/usr/local/share/locale"\" -I../gnulib/lib -I../lib -I/usr/include/libxml2     -g -O2 -MT hivexml-hivexml.o -MD -MP -MF .deps/hivexml-hivexml.Tpo -c -o hivexml-hivexml.o `test -f 'hivexml.c' || echo './'`hivexml.c
+mv -f .deps/hivexml-hivexml.Tpo .deps/hivexml-hivexml.Po
+/bin/bash ../libtool  --tag=CC   --mode=link gcc -std=gnu99 -DLOCALEBASEDIR=\""/usr/local/share/locale"\" -I../gnulib/lib -I../lib -I/usr/include/libxml2     -g -O2   -o hivexml hivexml-hivexml.o ../lib/libhivex.la -lxml2
+libtool: link: gcc -std=gnu99 -DLOCALEBASEDIR=\"/usr/local/share/locale\" -I../gnulib/lib -I../lib -I/usr/include/libxml2 -g -O2 -o .libs/hivexml hivexml-hivexml.o  ../lib/.libs/libhivex.so /usr/lib/libxml2.so
+hivexml-hivexml.o: In function `main':
+«SRCDIR»/xml/hivexml.c:96: undefined reference to `rpl_getopt'
+«SRCDIR»/xml/hivexml.c:110: undefined reference to `rpl_optind'
+«SRCDIR»/xml/hivexml.c:154: undefined reference to `rpl_optind'
+collect2: ld returned 1 exit status
+make[2]: *** [hivexml] Error 1
+make[2]: Leaving directory `«SRCDIR»/xml'
+---
+ lib/Makefile.am |    5 ++++-
+ sh/Makefile.am  |    1 +
+ xml/Makefile.am |    3 ++-
+ xml/hivexml.c   |    2 ++
+ 4 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index cfd2e05..a339a00 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -39,7 +39,10 @@ libhivex_la_LDFLAGS = \
+ 	$(LTLIBINTL) \
+ 	$(LTLIBTHREAD)
+ libhivex_la_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+-libhivex_la_CPPFLAGS = -I$(top_srcdir)/gnulib/lib -I$(srcdir)
++libhivex_la_CPPFLAGS = \
++  -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
++  -I$(srcdir)
+ 
+ include_HEADERS = hivex.h
+ 
+diff --git a/sh/Makefile.am b/sh/Makefile.am
+index 0898370..a6f5ae6 100644
+--- a/sh/Makefile.am
++++ b/sh/Makefile.am
+@@ -38,6 +38,7 @@ hivexsh_SOURCES = \
+ hivexsh_LDADD = ../lib/libhivex.la ../gnulib/lib/libgnu.la $(LIBREADLINE)
+ hivexsh_CFLAGS = \
+   -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
+   -I$(top_srcdir)/lib \
+   -DLOCALEBASEDIR=\""$(datadir)/locale"\" \
+   $(WARN_CFLAGS) $(WERROR_CFLAGS)
+diff --git a/xml/Makefile.am b/xml/Makefile.am
+index b2af45d..67ba248 100644
+--- a/xml/Makefile.am
++++ b/xml/Makefile.am
+@@ -23,10 +23,11 @@ bin_PROGRAMS = hivexml
+ hivexml_SOURCES = \
+   hivexml.c
+ 
+-hivexml_LDADD = ../lib/libhivex.la $(LIBXML2_LIBS)
++hivexml_LDADD = ../lib/libhivex.la ../gnulib/lib/libgnu.la $(LIBXML2_LIBS)
+ hivexml_CFLAGS = \
+   -DLOCALEBASEDIR=\""$(datadir)/locale"\" \
+   -I$(top_srcdir)/gnulib/lib \
++  -I$(top_builddir)/gnulib/lib \
+   -I$(top_srcdir)/lib \
+   $(LIBXML2_CFLAGS) \
+   $(WARN_CFLAGS) $(WERROR_CFLAGS)
+diff --git a/xml/hivexml.c b/xml/hivexml.c
+index 5030c24..d38e9d4 100644
+--- a/xml/hivexml.c
++++ b/xml/hivexml.c
+@@ -32,6 +32,8 @@
+ #include <libintl.h>
+ #endif
+ 
++#include <getopt.h>
++
+ #include <libxml/xmlwriter.h>
+ 
+ #include "hivex.h"
+-- 
+1.7.6
+

@@ -1,5 +1,5 @@
 # hivex
-# Copyright (C) 2009-2010 Red Hat Inc.
+# Copyright (C) 2009-2011 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
 
 # major/minor/release must be numbers
 m4_define([hivex_major],   [1])
-m4_define([hivex_minor],   [2])
-m4_define([hivex_release], [4])
+m4_define([hivex_minor],   [3])
+m4_define([hivex_release], [3])
 # extra can be any string
 m4_define([hivex_extra],   [])
 
@@ -40,7 +40,7 @@ AC_DEFINE([PACKAGE_VERSION_EXTRA],["hivex_extra"],[Extra version string])
 gl_EARLY
 gl_INIT
 
-AC_PROG_LIBTOOL
+AM_PROG_LIBTOOL
 
 dnl Check for basic C environment.
 AC_PROG_CC_STDC
@@ -89,6 +89,9 @@ if test "$gl_gcc_warnings" = yes; then
   nw="$nw -Wpacked"                 # Allow attribute((packed)) on structs
   nw="$nw -Wlong-long"              # Allow long long since it's required
                                     # by xstrtoll.
+  nw="$nw -Wsuggest-attribute=pure" # Don't suggest pure functions.
+#  nw="$nw -Wsuggest-attribute=const" # Don't suggest const functions.
+#  nw="$nw -Wunsuffixed-float-constants" # Don't care about these.
 
   gl_MANYWARN_ALL_GCC([ws])
   gl_MANYWARN_COMPLEMENT([ws], [$ws], [$nw])
@@ -131,7 +134,13 @@ dnl Check sizeof long.
 AC_CHECK_SIZEOF([long])
 
 dnl Headers.
-AC_CHECK_HEADERS([endian.h byteswap.h])
+AC_CHECK_HEADERS([byteswap.h endian.h libintl.h])
+
+dnl Check for mmap
+AC_REPLACE_FUNCS([mmap])
+
+dnl Functions.
+AC_CHECK_FUNCS([bindtextdomain])
 
 dnl Check for pod2man and pod2text.
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[no])
@@ -170,10 +179,17 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0])
 AC_SUBST([LIBXML2_CFLAGS])
 AC_SUBST([LIBXML2_LIBS])
 
+dnl hivexsh depends on open_memstream, which is absent on OS X.
+AC_CHECK_FUNC([open_memstream])
+AM_CONDITIONAL([HAVE_HIVEXSH],[test "x$ac_cv_func_open_memstream" = "xyes"])
+
 dnl Check for OCaml (optional, for OCaml bindings).
 AC_PROG_OCAML
 AC_PROG_FINDLIB
-AM_CONDITIONAL([HAVE_OCAML],[test "x$OCAMLC" != "xno" -a "x$OCAMLFIND" != "xno"])
+AM_CONDITIONAL([HAVE_OCAML],
+    [test "x$OCAMLC" != "xno" && test "x$OCAMLFIND" != "xno"])
+AM_CONDITIONAL([HAVE_OCAMLOPT],
+    [test "x$OCAMLOPT" != "xno" && test "x$OCAMLFIND" != "xno"])
 
 if test "x$OCAMLC" != "xno"; then
     dnl Check if we have caml/unixsupport.h header (OCaml bindings only).
@@ -192,9 +208,9 @@ if test "x$OCAMLC" != "xno"; then
     echo "char $f (); char foo() { return $f (); }" > conftest.c
     rm -f conftest_ml.ml
     touch conftest_ml.ml
-    if $OCAMLOPT -c conftest.c 2>/dev/null && \
-       $OCAMLOPT -c conftest_ml.ml 2>/dev/null && \
-       $OCAMLOPT conftest.o conftest_ml.cmx -o conftest 2>/dev/null ; then
+    if $OCAMLC -c conftest.c 2>/dev/null && \
+       $OCAMLC -c conftest_ml.ml 2>/dev/null && \
+       $OCAMLC conftest.o conftest_ml.cmo -o conftest 2>/dev/null ; then
         AC_DEFINE([HAVE_CAML_RAISE_WITH_ARGS],[1],
                   [Defined if function caml_raise_with_args exists.])
         AC_MSG_RESULT([found])
@@ -225,75 +241,82 @@ if test "x$missing_perl_modules" = "xyes"; then
 fi
 
 AM_CONDITIONAL([HAVE_PERL],
-    [test "x$PERL" != "xno" -a "x$missing_perl_modules" != "xyes"])
+    [test "x$PERL" != "xno" && test "x$missing_perl_modules" != "xyes"])
 
 dnl Check for Python (optional, for Python bindings).
-AC_CHECK_PROG([PYTHON],[python],[python],[no])
-
 PYTHON_PREFIX=
 PYTHON_VERSION=
 PYTHON_INCLUDEDIR=
-PYTHON_SITE_PACKAGES=
+PYTHON_INSTALLDIR=
+
+AC_CHECK_PROG([PYTHON],[python],[python],[no])
 
 if test "x$PYTHON" != "xno"; then
-    PYTHON_PREFIX=`$PYTHON -c "import sys; print sys.prefix"`
-    PYTHON_VERSION=`$PYTHON -c "import sys; print sys.version[[0:3]]"`
-    for d in \
-        $PYTHON_PREFIX/include/python$PYTHON_VERSION \
-        /usr/include/python$PYTHON_VERSION \
-        /usr/local/include/python$PYTHON_VERSION
-    do
-        AC_MSG_CHECKING([Python.h in $d])
-        if test -r "$d/Python.h"; then
-            AC_MSG_RESULT([found])
-            PYTHON_INCLUDEDIR=$d
-            break
+    AC_MSG_CHECKING([Python prefix])
+    PYTHON_PREFIX=`$PYTHON -c "import sys; print (sys.prefix)"`
+    AC_MSG_RESULT([$PYTHON_PREFIX])
+
+    AC_MSG_CHECKING([Python version])
+    PYTHON_VERSION_MAJOR=`$PYTHON -c "import sys; print (sys.version_info@<:@0@:>@)"`
+    PYTHON_VERSION_MINOR=`$PYTHON -c "import sys; print (sys.version_info@<:@1@:>@)"`
+    PYTHON_VERSION="$PYTHON_VERSION_MAJOR.$PYTHON_VERSION_MINOR"
+    AC_MSG_RESULT([$PYTHON_VERSION])
+
+    AC_MSG_CHECKING([for Python include path])
+    if test -z "$PYTHON_INCLUDEDIR"; then
+        python_path=`$PYTHON -c "import distutils.sysconfig; \
+                                 print (distutils.sysconfig.get_python_inc ());"`
+        PYTHON_INCLUDEDIR=$python_path
+    fi
+    AC_MSG_RESULT([$PYTHON_INCLUDEDIR])
+
+    AC_ARG_WITH([python-installdir],
+                [AS_HELP_STRING([--with-python-installdir],
+		                [directory to install python modules @<:@default=check@:>@])],
+		[PYTHON_INSTALLDIR="$withval"
+		AC_MSG_NOTICE([Python install dir $PYTHON_INSTALLDIR])],
+		[PYTHON_INSTALLDIR=check])
+
+    if test "x$PYTHON_INSTALLDIR" = "xcheck"; then
+        PYTHON_INSTALLDIR=
+        AC_MSG_CHECKING([for Python site-packages path])
+        if test -z "$PYTHON_INSTALLDIR"; then
+            PYTHON_INSTALLDIR=`$PYTHON -c "import distutils.sysconfig; \
+                                           print (distutils.sysconfig.get_python_lib(1,0));"`
         fi
-        AC_MSG_RESULT([not found])
-    done
-    if test "x$PYTHON_INCLUDEDIR" = "x"; then
-        AC_MSG_WARN([Python include directory not found])
+        AC_MSG_RESULT([$PYTHON_INSTALLDIR])
     fi
 
-    for d in \
-        $PYTHON_PREFIX/lib64/python$PYTHON_VERSION/site-packages \
-        $PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages \
-        /usr/lib64/python$PYTHON_VERSION/site-packages \
-        /usr/lib/python$PYTHON_VERSION/site-packages \
-        /usr/local/lib/python$PYTHON_VERSION/site-packages
-    do
-        AC_MSG_CHECKING([for $d])
-        if test -d "$d"; then
-            AC_MSG_RESULT([found])
-            PYTHON_SITE_PACKAGES=$d
-            break
-        fi
-        AC_MSG_RESULT([not found])
-    done
-    if test "x$PYTHON_SITE_PACKAGES" = "x"; then
-        AC_MSG_WARN([Python site-packages directory not found])
-    fi
-
+    dnl Look for libpython and some optional symbols in it.
     old_LIBS="$LIBS"
-    LIBS="$LIBS -lpython$PYTHON_VERSION"
-    AC_CHECK_FUNCS([PyCapsule_New])
+    if test "x$PYTHON_VERSION_MAJOR" = "x3"; then
+        dnl libpython3 is called "libpython3.Xmu.so"
+        LIBPYTHON="python${PYTHON_VERSION}mu"
+    else
+        LIBPYTHON="python$PYTHON_VERSION"
+    fi
+    AC_CHECK_LIB([$LIBPYTHON], [PyList_Size], [],
+                 [AC_MSG_FAILURE([$LIBPYTHON is not installed])])
+
+    AC_CHECK_FUNCS([PyCapsule_New \
+                    PyString_AsString])
     LIBS="$old_LIBS"
 fi
 
 AC_SUBST(PYTHON_PREFIX)
 AC_SUBST(PYTHON_VERSION)
 AC_SUBST(PYTHON_INCLUDEDIR)
-AC_SUBST(PYTHON_SITE_PACKAGES)
+AC_SUBST(PYTHON_INSTALLDIR)
 
 AM_CONDITIONAL([HAVE_PYTHON],
-    [test "x$PYTHON_INCLUDEDIR" != "x" -a "x$PYTHON_SITE_PACKAGES" != "x"])
+    [test "x$PYTHON" != "xno" && test "x$PYTHON_INCLUDEDIR" != "x" && test "x$PYTHON_INSTALLDIR" != "x"])
 
-dnl dnl Check for Ruby and rake (optional, for Ruby bindings).
-dnl AC_CHECK_LIB([ruby],[ruby_init],[HAVE_LIBRUBY=1],[HAVE_LIBRUBY=0])
-dnl AC_CHECK_PROG([RAKE],[rake],[rake],[no])
+dnl Check for Ruby and rake (optional, for Ruby bindings).
+AC_CHECK_LIB([ruby],[ruby_init],[HAVE_LIBRUBY=1],[HAVE_LIBRUBY=0])
+AC_CHECK_PROG([RAKE],[rake],[rake],[no])
 
-dnl AM_CONDITIONAL([HAVE_RUBY],
-dnl     [test "x$RAKE" != "xno" -a -n "$HAVE_LIBRUBY"])
+AM_CONDITIONAL([HAVE_RUBY],
+    [test "x$RAKE" != "xno" && test -n "$HAVE_LIBRUBY"])
 
 dnl dnl Check for Java.
 dnl AC_ARG_WITH(java_home,
@@ -303,7 +326,7 @@ dnl     [],
 dnl     [with_java_home=check])
 
 dnl if test "x$with_java_home" != "xno"; then
-dnl     if test "x$with_java_home" != "xyes" -a "x$with_java_home" != "xcheck"
+dnl     if test "x$with_java_home" != "xyes" && test "x$with_java_home" != "xcheck"
 dnl     then
 dnl         # Reject unsafe characters in $JAVA_HOME
 dnl         jh_lf='
@@ -325,7 +348,7 @@ dnl         for d in \
 dnl             /usr/lib/jvm/java \
 dnl             /usr/lib/jvm/java-6-openjdk
 dnl         do
-dnl             if test -d $d -a -f $d/bin/java; then
+dnl             if test -d $d && test -f $d/bin/java; then
 dnl                 JAVA_HOME=$d
 dnl                 break
 dnl             fi
@@ -444,6 +467,7 @@ dnl     [test "x$GHC" != "xno"])
 dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
+                 generator/Makefile
                  gnulib/lib/Makefile
                  gnulib/tests/Makefile
                  hivex.pc
@@ -455,8 +479,10 @@ AC_CONFIG_FILES([Makefile
                  python/Makefile
                  po/Makefile.in
                  regedit/Makefile
+                 ruby/Makefile ruby/Rakefile
                  sh/Makefile
                  xml/Makefile])
+AC_CONFIG_FILES([python/run-python-tests], [chmod +x python/run-python-tests])
 AC_OUTPUT
 
 dnl Produce summary.
@@ -473,8 +499,8 @@ echo -n "Perl bindings ....................... "
 if test "x$HAVE_PERL_TRUE" = "x"; then echo "yes"; else echo "no"; fi
 echo -n "Python bindings ..................... "
 if test "x$HAVE_PYTHON_TRUE" = "x"; then echo "yes"; else echo "no"; fi
-dnl echo -n "Ruby bindings ....................... "
-dnl if test "x$HAVE_RUBY_TRUE" = "x"; then echo "yes"; else echo "no"; fi
+echo -n "Ruby bindings ....................... "
+if test "x$HAVE_RUBY_TRUE" = "x"; then echo "yes"; else echo "no"; fi
 dnl echo -n "Java bindings ....................... "
 dnl if test "x$HAVE_JAVA_TRUE" = "x"; then echo "yes"; else echo "no"; fi
 dnl echo -n "Haskell bindings .................... "

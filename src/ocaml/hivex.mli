@@ -3,7 +3,7 @@
  *   generator/generator.ml
  * ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
  *
- * Copyright (C) 2009-2010 Red Hat Inc.
+ * Copyright (C) 2009-2011 Red Hat Inc.
  * Derived from code by Petter Nordahl-Hagen under a compatible license:
  *   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
  * Derived from code by Markus Stephany under a compatible license:
@@ -81,8 +81,14 @@ val close : t -> unit
 val root : t -> node
 (** return the root node of the hive *)
 
+val last_modified : t -> int64
+(** return the modification time from the header of the hive *)
+
 val node_name : t -> node -> string
 (** return the name of the node *)
+
+val node_timestamp : t -> node -> int64
+(** return the modification time of the node *)
 
 val node_children : t -> node -> node array
 (** return children of node *)
@@ -99,11 +105,20 @@ val node_values : t -> node -> value array
 val node_get_value : t -> node -> string -> value
 (** return named key at node *)
 
+val value_key_len : t -> value -> int64
+(** return the length of a value's key *)
+
 val value_key : t -> value -> string
 (** return the key of a (key, value) pair *)
 
 val value_type : t -> value -> hive_type * int
 (** return data length and data type of a value *)
+
+val node_struct_length : t -> node -> int64
+(** return the length of a node *)
+
+val value_struct_length : t -> value -> int64
+(** return the length of a value data structure *)
 
 val value_value : t -> value -> hive_type * string
 (** return data length, data type and data of a value *)

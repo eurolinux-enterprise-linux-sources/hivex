@@ -1,4 +1,4 @@
-/* Copyright (C) 1991, 1994, 1997-1998, 2000, 2003-2010 Free Software
+/* Copyright (C) 1991, 1994, 1997-1998, 2000, 2003-2011 Free Software
    Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with the GNU C
@@ -34,10 +34,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#if HAVE_GNU_LD
-# define environ __environ
-#else
+#if _LIBC
+# if HAVE_GNU_LD
+#  define environ __environ
+# else
 extern char **environ;
+# endif
 #endif
 
 #if _LIBC

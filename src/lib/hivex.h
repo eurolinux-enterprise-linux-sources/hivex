@@ -3,7 +3,7 @@
  *   generator/generator.ml
  * ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
  *
- * Copyright (C) 2009-2010 Red Hat Inc.
+ * Copyright (C) 2009-2011 Red Hat Inc.
  * Derived from code by Petter Nordahl-Hagen under a compatible license:
  *   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
  * Derived from code by Markus Stephany under a compatible license:
@@ -27,6 +27,7 @@
 #ifndef HIVEX_H_
 #define HIVEX_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -41,6 +42,13 @@ typedef struct hive_h hive_h;
 /* Nodes and values. */
 typedef size_t hive_node_h;
 typedef size_t hive_value_h;
+
+#include <errno.h>
+#ifdef ENOKEY
+# define HIVEX_NO_KEY ENOKEY
+#else
+# define HIVEX_NO_KEY ENOENT
+#endif
 
 /* Pre-defined types. */
 enum hive_type {
@@ -117,14 +125,19 @@ typedef struct hive_set_value hive_set_value;
 extern hive_h *hivex_open (const char *filename, int flags);
 extern int hivex_close (hive_h *h);
 extern hive_node_h hivex_root (hive_h *h);
+extern int64_t hivex_last_modified (hive_h *h);
 extern char *hivex_node_name (hive_h *h, hive_node_h node);
+extern int64_t hivex_node_timestamp (hive_h *h, hive_node_h node);
 extern hive_node_h *hivex_node_children (hive_h *h, hive_node_h node);
 extern hive_node_h hivex_node_get_child (hive_h *h, hive_node_h node, const char *name);
 extern hive_node_h hivex_node_parent (hive_h *h, hive_node_h node);
 extern hive_value_h *hivex_node_values (hive_h *h, hive_node_h node);
 extern hive_value_h hivex_node_get_value (hive_h *h, hive_node_h node, const char *key);
+extern size_t hivex_value_key_len (hive_h *h, hive_value_h val);
 extern char *hivex_value_key (hive_h *h, hive_value_h val);
 extern int hivex_value_type (hive_h *h, hive_value_h val, hive_type *t, size_t *len);
+extern size_t hivex_node_struct_length (hive_h *h, hive_node_h node);
+extern size_t hivex_value_struct_length (hive_h *h, hive_value_h val);
 extern char *hivex_value_value (hive_h *h, hive_value_h val, hive_type *t, size_t *len);
 extern char *hivex_value_string (hive_h *h, hive_value_h val);
 extern char **hivex_value_multiple_strings (hive_h *h, hive_value_h val);
