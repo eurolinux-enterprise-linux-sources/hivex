@@ -62,6 +62,8 @@
 #define HIVEX_MAX_ALLOCATION  1000000
 
 static char *windows_utf16_to_utf8 (/* const */ char *input, size_t len);
+static size_t utf16_string_len_in_bytes (const char *str);
+static size_t utf16_string_len_in_bytes_max (const char *str, size_t len);
 
 struct hive_h {
   char *filename;
@@ -540,6 +542,9 @@ hivex_close (hive_h *h)
   r = close (h->fd);
   free (h->filename);
   free (h);
+
+  if (h->msglvl >= 1)
+    fprintf (stderr, "hivex_close\n");
 
   return r;
 }
@@ -1275,12 +1280,16 @@ windows_utf16_to_utf8 (/* const */ char *input, size_t len)
   size_t r = iconv (ic, &inp, &inlen, &outp, &outlen);
   if (r == (size_t) -1) {
     if (errno == E2BIG) {
+      int err = errno;
       size_t prev = outalloc;
       /* Try again with a larger output buffer. */
       free (out);
       outalloc *= 2;
-      if (outalloc < prev)
+      if (outalloc < prev) {
+        iconv_close (ic);
+        errno = err;
         return NULL;
+      }
       goto again;
     }
     else {
@@ -1315,6 +1324,20 @@ hivex_value_string (hive_h *h, hive_value_h value)
     return NULL;
   }
 
+  /* Deal with the case where Windows has allocated a large buffer
+   * full of random junk, and only the first few bytes of the buffer
+   * contain a genuine UTF-16 string.
+   *
+   * In this case, iconv would try to process the junk bytes as UTF-16
+   * and inevitably find an illegal sequence (EILSEQ).  Instead, stop
+   * after we find the first \0\0.
+   *
+   * (Found by Hilko Bengen in a fresh Windows XP SOFTWARE hive).
+   */
+  size_t slen = utf16_string_len_in_bytes_max (data, len);
+  if (slen > len)
+    len = slen;
+
   char *ret = windows_utf16_to_utf8 (data, len);
   free (data);
   if (ret == NULL)
@@ -1346,6 +1369,21 @@ utf16_string_len_in_bytes (const char *str)
   while (str[0] || str[1]) {
     str += 2;
     ret += 2;
+  }
+
+  return ret;
+}
+
+/* As for utf16_string_len_in_bytes but only read up to a maximum length. */
+static size_t
+utf16_string_len_in_bytes_max (const char *str, size_t len)
+{
+  size_t ret = 0;
+
+  while (len > 0 && (str[0] || str[1])) {
+    str += 2;
+    ret += 2;
+    len -= 2;
   }
 
   return ret;
@@ -2605,4 +2643,84 @@ hivex_node_set_values (hive_h *h, hive_node_h node,
   }
 
   return 0;
+}
+
+int
+hivex_node_set_value (hive_h *h, hive_node_h node,
+		      const hive_set_value *val, int flags)
+{
+  hive_value_h *prev_values = hivex_node_values (h, node);
+  if (prev_values == NULL)
+    return -1;
+
+  int retval = -1;
+
+  size_t nr_values = 0;
+  for (hive_value_h *itr = prev_values; *itr != 0; ++itr)
+    ++nr_values;
+
+  hive_set_value *values = malloc ((nr_values + 1) * (sizeof (hive_set_value)));
+  if (values == NULL)
+    goto leave_prev_values;
+
+  int alloc_ct = 0;
+  int idx_of_val = -1;
+  hive_value_h *prev_val;
+  for (prev_val = prev_values; *prev_val != 0; ++prev_val) {
+    size_t len;
+    hive_type t;
+
+    hive_set_value *value = &values[prev_val - prev_values];
+
+    char *valval = hivex_value_value (h, *prev_val, &t, &len);
+    if (valval == NULL) goto leave_partial;
+
+    ++alloc_ct;
+    value->value = valval;
+    value->t = t;
+    value->len = len;
+
+    char *valkey = hivex_value_key (h, *prev_val);
+    if (valkey == NULL) goto leave_partial;
+
+    ++alloc_ct;
+    value->key = valkey;
+
+    if (STRCASEEQ (valkey, val->key))
+      idx_of_val = prev_val - prev_values;
+  }
+
+  if (idx_of_val > -1) {
+    free (values[idx_of_val].key);
+    free (values[idx_of_val].value);
+  } else {
+    idx_of_val = nr_values;
+    ++nr_values;
+  }
+
+  hive_set_value *value = &values[idx_of_val];
+  *value = (hive_set_value){
+    .key = strdup (val->key),
+    .value = malloc (val->len),
+    .len = val->len,
+    .t = val->t
+  };
+
+  if (value->key == NULL || value->value == NULL) goto leave_partial;
+  memcpy (value->value, val->value, val->len);
+
+  retval = hivex_node_set_values (h, node, nr_values, values, 0);
+
+ leave_partial:
+  for (int i = 0; i < alloc_ct; i += 2) {
+    if (values[i / 2].value != NULL)
+      free (values[i / 2].value);
+    if (i + 1 < alloc_ct && values[i / 2].key != NULL)
+      free (values[i / 2].key);
+  }
+  free (values);
+
+ leave_prev_values:
+  free (prev_values);
+  return retval;
 }

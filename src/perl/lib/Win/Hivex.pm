@@ -282,8 +282,7 @@ subnodes become invalid.  You cannot delete the root node.
  $h->node_set_values ($node, \@values)
 
 This call can be used to set all the (key, value) pairs
-stored in C<node>.  Note that this library does not offer
-a way to modify just a single key at a node.
+stored in C<node>.
 
 C<node> is the node to modify.
 
@@ -294,6 +293,16 @@ and C<data>.
 Any existing values stored at the node are discarded, and their
 C<value> handles become invalid.  Thus you can remove all
 values stored at C<node> by passing C<@values = []>.
+
+=item node_set_value
+
+ $h->node_set_value ($node, $val)
+
+This call can be used to replace a single (key, value) pair
+stored in C<node>. If the key does not already exist, then a
+new key is added. Key matching is case insensitive.
+
+C<node> is the node to modify.
 
 =cut
 

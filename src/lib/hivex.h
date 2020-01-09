@@ -134,6 +134,7 @@ extern int hivex_commit (hive_h *h, const char *filename, int flags);
 extern hive_node_h hivex_node_add_child (hive_h *h, hive_node_h parent, const char *name);
 extern int hivex_node_delete_child (hive_h *h, hive_node_h node);
 extern int hivex_node_set_values (hive_h *h, hive_node_h node, size_t nr_values, const hive_set_value *values, int flags);
+extern int hivex_node_set_value (hive_h *h, hive_node_h node, const hive_set_value *val, int flags);
 
 /* Visit all nodes.  This is specific to the C API and is not made
  * available to other languages.  This is because of the complexity

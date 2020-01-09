@@ -69,6 +69,7 @@ caml_raise_with_args (value tag, int nargs, value args[])
 #define Hiveh_val(v) (*((hive_h **)Data_custom_val(v)))
 static value Val_hiveh (hive_h *);
 static int HiveOpenFlags_val (value);
+static hive_set_value *HiveSetValue_val (value);
 static hive_set_value *HiveSetValues_val (value);
 static hive_type HiveType_val (value);
 static value Val_hive_type (hive_type);
@@ -663,6 +664,37 @@ ocaml_hivex_node_set_values (value hv, value nodev, value valuesv)
   CAMLreturn (rv);
 }
 
+/* Automatically generated wrapper for function
+ * val node_set_value : t -> node -> set_value -> unit
+ */
+
+/* Emit prototype to appease gcc's -Wmissing-prototypes. */
+CAMLprim value ocaml_hivex_node_set_value (value hv, value nodev, value valv);
+
+CAMLprim value
+ocaml_hivex_node_set_value (value hv, value nodev, value valv)
+{
+  CAMLparam3 (hv, nodev, valv);
+  CAMLlocal1 (rv);
+
+  hive_h *h = Hiveh_val (hv);
+  if (h == NULL)
+    raise_closed ("node_set_value");
+  hive_node_h node = Int_val (nodev);
+  hive_set_value *val = HiveSetValue_val (valv);
+
+  int r;
+  r = hivex_node_set_value (h, node, val, 0);
+
+  free (val);
+
+  if (r == -1)
+    raise_error ("node_set_value");
+
+  rv = Val_unit;
+  CAMLreturn (rv);
+}
+
 static int
 HiveOpenFlags_val (value v)
 {
@@ -676,6 +708,19 @@ HiveOpenFlags_val (value v)
   }
 
   return flags;
+}
+
+static hive_set_value *
+HiveSetValue_val (value v)
+{
+  hive_set_value *val = malloc (sizeof (hive_set_value));
+
+  val->key = String_val (Field (v, 0));
+  val->t = HiveType_val (Field (v, 1));
+  val->len = caml_string_length (Field (v, 2));
+  val->value = String_val (Field (v, 2));
+
+  return val;
 }
 
 static hive_set_value *

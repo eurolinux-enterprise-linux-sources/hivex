@@ -56,6 +56,7 @@ hivex - Windows Registry "hive" extraction library
  hive_node_h hivex_node_add_child (hive_h *h, hive_node_h parent, const char *name);
  int hivex_node_delete_child (hive_h *h, hive_node_h node);
  int hivex_node_set_values (hive_h *h, hive_node_h node, size_t nr_values, const hive_set_value *values, int flags);
+ int hivex_node_set_value (hive_h *h, hive_node_h node, const hive_set_value *val, int flags);
 
 Link with I<-lhivex>.
 
@@ -320,7 +321,7 @@ below which can be used to return the value in a more useful form when
 you know the type in advance.
 
 Returns 0 on success.
-On error this returns NULL and sets errno.
+On error this returns -1 and sets errno.
 
 =head2 hivex_value_value
 
@@ -425,8 +426,7 @@ On error this returns -1 and sets errno.
 int hivex_node_set_values (hive_h *h, hive_node_h node, size_t nr_values, const hive_set_value *values, int flags);
 
 This call can be used to set all the (key, value) pairs
-stored in C<node>.  Note that this library does not offer
-a way to modify just a single key at a node.
+stored in C<node>.
 
 C<node> is the node to modify.
 
@@ -438,6 +438,25 @@ should be C<nr_values> elements in this array.
 Any existing values stored at the node are discarded, and their
 C<hive_value_h> handles become invalid.  Thus you can remove all
 values stored at C<node> by passing C<nr_values = 0>.
+
+Returns 0 on success.
+On error this returns -1 and sets errno.
+
+=head2 hivex_node_set_value
+
+int hivex_node_set_value (hive_h *h, hive_node_h node, const hive_set_value *val, int flags);
+
+This call can be used to replace a single (key, value) pair
+stored in C<node>. If the key does not already exist, then a
+new key is added. Key matching is case insensitive.
+
+C<node> is the node to modify.
+
+The flags parameter is unused.  Always pass 0.
+
+C<value> is a single (key, value) pair.
+
+Existing C<hive_value_h> handles become invalid.
 
 Returns 0 on success.
 On error this returns -1 and sets errno.

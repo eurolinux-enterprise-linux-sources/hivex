@@ -1,12 +1,13 @@
 Name:           hivex
-Version:        1.2.2
-Release:        1%{?dist}
+Version:        1.2.4
+Release:        3%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 Group:          Development/Libraries
 License:        LGPLv2
 URL:            http://libguestfs.org/
-Source0:        http://libguestfs.org/download/%{name}-%{version}.tar.gz
+Source0:        http://libguestfs.org/download/hivex/%{name}-%{version}.tar.gz
+Patch0:         %{name}-1.2.3-dirs.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Doesn't build on s390 because of lack of OCaml.  Actually, OCaml
@@ -23,6 +24,7 @@ BuildRequires:  perl-IO-stringy
 BuildRequires:  perl-libintl
 BuildRequires:  ocaml
 BuildRequires:  ocaml-findlib-devel
+BuildRequires:  python-devel
 BuildRequires:  readline-devel
 BuildRequires:  libxml2-devel
 
@@ -53,9 +55,11 @@ also provides a useful high-level tool called 'virt-win-reg' (based on
 hivex technology) which can be used to query specific registry keys in
 an existing Windows VM.
 
+For OCaml bindings, see 'ocaml-hivex-devel'.
+
 For Perl bindings, see 'perl-hivex'.
 
-For OCaml bindings, see 'ocaml-hivex-devel'.
+For Python bindings, see 'python-hivex'.
 
 
 %package devel
@@ -105,8 +109,21 @@ Requires:      perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $versio
 perl-%{name} contains Perl bindings for %{name}.
 
 
+%package -n python-%{name}
+Summary:       Python bindings for %{name}
+Group:         Development/Libraries
+Requires:      %{name} = %{version}-%{release}
+
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
+
+%description -n python-%{name}
+python-%{name} contains Python bindings for %{name}.
+
+
 %prep
 %setup -q
+%patch0 -p1 -b .dirs
 
 
 %build
@@ -125,6 +142,17 @@ rm $RPM_BUILD_ROOT%{_libdir}/libhivex.la
 find $RPM_BUILD_ROOT -name perllocal.pod -delete
 find $RPM_BUILD_ROOT -name .packlist -delete
 find $RPM_BUILD_ROOT -name '*.bs' -delete
+
+# Remove unwanted Python files:
+#rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.a
+rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
+
+# Only install unversioned *.so file for Python bindings.
+rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so
+mv $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so.0.0.0 \
+   $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so
+rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.so.0*
+
 
 %find_lang %{name}
 
@@ -188,7 +216,27 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Win::Hivex::Regedit.3pm*
 
 
+%files -n python-%{name}
+%defattr(-,root,root,-)
+%{python_sitearch}/*.py
+%{python_sitearch}/*.pyc
+%{python_sitearch}/*.pyo
+%{python_sitearch}/*.so
+
+
 %changelog
+* Fri Jan 14 2011 Richard W.M. Jones <rjones@redhat.com> - 1.2.4-3
+- Fix multilib conflicts in *.pyc and *.pyo files.
+- Only install unversioned *.so file for Python bindings.
+
+* Thu Dec  2 2010 Richard W.M. Jones <rjones@redhat.com> - 1.2.4-2
+- Rebase to upstream version 1.2.4 (RHBZ#642631).
+  * Python bindings (python-hivex subpackage).
+  * Adds hivex_set_value API call (Conrad Meyer).
+  * Miscellaneous small bug fixes.
+- Fix Source0.
+- Fix builds with recent perl (Dan Horák).
+
 * Wed Apr 28 2010 Richard W.M. Jones <rjones@redhat.com> - 1.2.2-1
 - Rebase to version 1.2.2 which contains an important fix for
   regedit importing (for V2V).

@@ -131,3 +131,6 @@ val node_delete_child : t -> node -> unit
 
 val node_set_values : t -> node -> set_value array -> unit
 (** set (key, value) pairs at a node *)
+
+val node_set_value : t -> node -> set_value -> unit
+(** set a single (key, value) pair at a given node *)

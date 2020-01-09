@@ -1,4 +1,58 @@
+2010-11-28  Richard W.M. Jones  <rjones@redhat.com>
+
+	Python bindings.
+
+2010-08-27  Richard Jones  <rjones@redhat.com>
+
+	Version 1.2.3.
+
+	build: Don't warn about 'long long'.
+	We have to allow this, even though it's a GCC extension.
+
+	This is a port of libguestfs commit 0c0976496dafda4d172c5a7fc787d6a87d5bce8d.
+
+2010-08-27  Geert Warrink  <geert.warrink@onsnet.nu>
+
+	Add Dutch translations (RHBZ#624455).
+
+2010-08-13  Matthew Booth  <mbooth@redhat.com>
+
+	Add debug output to hivex_close.
+
+2010-07-12  Richard Jones  <rjones@redhat.com>
+
+	Don't try to process junk after a string value as UTF-16.
+	Thanks to Hilko Bengen for characterizing the issue and
+	providing an initial version of this patch.
+
+2010-07-12  Hilko Bengen  <bengen@hilluzination.de>
+
+	Call iconv_close along error path out of function.
+
+2010-07-11  Richard Jones  <rjones@redhat.com>
+
+	perl: Fix generated XS code for value_dword binding.
+	Thanks to Hilko Bengen for spotting the problem.
+
+2010-07-08  Conrad Meyer  <cemeyer@cs.washington.edu>
+
+	Add hivex_set_value API call, and ocaml and perl bindings, and tests.
+
+2010-06-13  Richard Jones  <rjones@redhat.com>
+
+	hivex_value_type: Returns -1 on error.  Fix documentation.
+
+2010-05-13  Richard Jones  <rjones@redhat.com>
+
+	Include a test for regimport of values containing backslash chars.
+
+2010-04-30  Richard Jones  <rjones@redhat.com>
+
+	regedit: Fix documentation for CurrentControlSet (thanks Yuval Kashtan).
+
 2010-04-28  Richard Jones  <rjones@redhat.com>
+
+	Version 1.2.2.
 
 	regedit: Add implicit nul-termination when importing strings.
 	When you import a string value like:

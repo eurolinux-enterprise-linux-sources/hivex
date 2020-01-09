@@ -146,6 +146,39 @@ unpack_pl_set_values (SV *sv)
   return ret;
 }
 
+static hive_set_value *
+unpack_set_value (SV *sv)
+{
+  hive_set_value *ret;
+
+  if (!sv || !SvROK (sv) || SvTYPE (SvRV (sv)) != SVt_PVHV)
+    croak ("not a hash ref");
+
+  ret = malloc (sizeof (hive_set_value));
+  if (ret == NULL)
+    croak ("malloc failed");
+
+  HV *hv = (HV *)SvRV(sv);
+
+  SV **svp;
+  svp = hv_fetch (hv, "key", 3, 0);
+  if (!svp || !*svp)
+    croak ("missing 'key' in hash");
+  ret->key = SvPV_nolen (*svp);
+
+  svp = hv_fetch (hv, "t", 1, 0);
+  if (!svp || !*svp)
+    croak ("missing 't' in hash");
+  ret->t = SvIV (*svp);
+
+  svp = hv_fetch (hv, "value", 5, 0);
+  if (!svp || !*svp)
+    croak ("missing 'value' in hash");
+  ret->value = SvPV (*svp, ret->len);
+
+  return ret;
+}
+
 MODULE = Win::Hivex  PACKAGE = Win::Hivex
 
 PROTOTYPES: ENABLE
@@ -371,12 +404,11 @@ value_dword (h, val)
       hive_h *h;
       int val;
 PREINIT:
-      /* hive_node_h = hive_value_h = size_t so we cheat
-         here to simplify the generator */
-      size_t r;
+      int32_t r;
    CODE:
+      errno = 0;
       r = hivex_value_dword (h, val);
-      if (r == 0)
+      if (r == -1 && errno != 0)
         croak ("%s: %s", "value_dword", strerror (errno));
       RETVAL = newSViv (r);
  OUTPUT:
@@ -448,4 +480,17 @@ PREINIT:
       free (values.values);
       if (r == -1)
         croak ("%s: %s", "node_set_values", strerror (errno));
+
+void
+node_set_value (h, node, val)
+      hive_h *h;
+      int node;
+      hive_set_value *val = unpack_set_value (ST(2));
+PREINIT:
+      int r;
+ PPCODE:
+      r = hivex_node_set_value (h, node, val, 0);
+      free (val);
+      if (r == -1)
+        croak ("%s: %s", "node_set_value", strerror (errno));
 
