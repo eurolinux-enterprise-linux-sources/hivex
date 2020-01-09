@@ -1,6 +1,6 @@
 Name:           hivex
 Version:        1.3.3
-Release:        4.3%{?dist}
+Release:        4%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 Group:          Development/Libraries
@@ -40,14 +40,11 @@ Patch0:         %{name}-1.2.3-dirs.patch
 Patch1:         0001-hivexml-Remove-unused-variable.patch
 Patch2:         0001-hivex-Added-gnulib-includes-from-builddir-as-suggest.patch
 Patch3:         0001-hivex-Added-gnulib-includes-from-builddir-as-suggest-AUTOMAKE.patch
-Patch4:         0001-patch-for-read-support-of-li-records-from-ri-interme.patch
-Patch5:         hivex-1.3.3-missing-checks-for-small-truncated-files.patch
-Patch6:         hivex-1.3.3-fix-typos-rhbz1164693.patch
 
 
 %description
-Hive files are undocumented binary files that Windows uses to store
-the Windows Registry on the disk.  Hivex is a library that can read
+Hive files are the undocumented binary blobs that Windows uses to
+store the Windows Registry on disk.  Hivex is a library that can read
 and write to these files.
 
 'hivexsh' is a shell you can use to interactively navigate a hive
@@ -140,9 +137,6 @@ python-%{name} contains Python bindings for %{name}.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
 
 
 %build
@@ -243,18 +237,6 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri Feb 27 2015 Richard W.M. Jones <rjones@redhat.com> - 1.3.3-4.3
-- Add missing checks for small/truncated files
-  resolves: rhbz#1158993
-- Fix typo in man page Win::Hivex.3.pm
-  resolves: rhbz#1164693
-
-* Thu Oct 11 2012 Richard W.M. Jones <rjones@redhat.com> - 1.3.3-4.2
-- Remove loaded text from description
-  resolves: rhbz#822741
-- Add patch to fix parsing of hives that contain large ri-records
-  resolves: rhbz#841924
-
 * Tue Dec 20 2011 Richard W.M. Jones <rjones@redhat.com> - 1.3.3-4
 - Rebase to upstream version 1.3.3
   resolves: rhbz#734208
