@@ -7,7 +7,7 @@
 
 Name:           hivex
 Version:        1.3.8
-Release:        2%{?dist}
+Release:        4%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 License:        LGPLv2
@@ -254,6 +254,12 @@ rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
 
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.3.8-4
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.3.8-3
+- Mass rebuild 2013-12-27
+
 * Thu Oct 31 2013 Richard W.M. Jones <rjones@redhat.com> - 1.3.8-2
 - Drop hivex-static subpackage
   resolves: rhbz#1020019
