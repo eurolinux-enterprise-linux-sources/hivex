@@ -22,8 +22,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "byte_conversions.h"
-
 struct hive_h {
   char *filename;
   int fd;
@@ -125,19 +123,7 @@ struct ntreg_hbin_block {
 struct ntreg_nk_record {
   int32_t seg_len;              /* length (always -ve because used) */
   char id[2];                   /* "nk" */
-  uint16_t flags;               /* bit 1: HiveExit
-                                   bit 2: HiveEntry == root key
-                                   bit 3: NoDelete
-                                   bit 4: SymbolicLink
-                                   bit 5: CompressedName: Name is encoded
-                                          in ASCII (actually: Latin-1)
-                                          rather than UTF-16.
-                                   bit 6: PredefinedHandle
-                                   bit 7: VirtMirrored
-                                   bit 8: VirtTarget
-                                   bit 9: VirtualStore */
-  /* Information from: Peter Norris: The Internal Structure of the
-     Windows Registry, 2008, p.220 ff. */
+  uint16_t flags;
   int64_t timestamp;
   uint32_t unknown1;
   uint32_t parent;              /* offset of owner/parent */
@@ -169,7 +155,7 @@ struct ntreg_lf_record {
   struct {
     uint32_t offset;            /* offset of nk-record for this subkey */
     char hash[4];               /* hash of subkey name */
-  } __attribute__((__packed__)) keys[1];
+  } keys[1];
 } __attribute__((__packed__));
 
 struct ntreg_ri_record {
@@ -265,19 +251,10 @@ extern size_t _hivex_get_offset_list_length (offset_list *list);
 extern void _hivex_set_offset_list_limit (offset_list *list, size_t limit);
 extern void _hivex_free_offset_list (offset_list *list);
 extern size_t * _hivex_return_offset_list (offset_list *list);
-extern void _hivex_print_offset_list (offset_list *list, FILE *fp);
 
 /* utf16.c */
-extern char * _hivex_recode (const char *input_encoding,
-                             const char *input, size_t input_len,
-                             const char *output_encoding, size_t *output_len);
-#define _hivex_windows_utf16_to_utf8(_input, _len) \
-  _hivex_recode ("UTF-16LE", _input, _len, "UTF-8", NULL)
-#define _hivex_windows_latin1_to_utf8(_input, _len) \
-  _hivex_recode ("LATIN1", _input, _len, "UTF-8", NULL)
-extern char* _hivex_encode_string(const char *str, size_t *size, int *utf16);
+extern char *_hivex_windows_utf16_to_utf8 (/* const */ char *input, size_t len);
 extern size_t _hivex_utf16_string_len_in_bytes_max (const char *str, size_t len);
-extern size_t _hivex_utf8_strlen (const char* str, size_t len, int utf16);
 
 /* util.c */
 extern void _hivex_free_strings (char **argv);
@@ -321,7 +298,7 @@ extern int _hivex_get_values (hive_h *h, hive_node_h node, hive_value_h **values
 /* These limits are in place to stop really stupid stuff and/or exploits. */
 #define HIVEX_MAX_SUBKEYS       15000
 #define HIVEX_MAX_VALUES        10000
-#define HIVEX_MAX_VALUE_LEN   2000000
+#define HIVEX_MAX_VALUE_LEN   1000000
 #define HIVEX_MAX_ALLOCATION  1000000
 
 #endif /* HIVEX_INTERNAL_H_ */

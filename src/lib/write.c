@@ -41,6 +41,7 @@
 
 #include "hivex.h"
 #include "hivex-internal.h"
+#include "byte_conversions.h"
 
 /*----------------------------------------------------------------------
  * Writing.
@@ -558,20 +559,15 @@ insert_subkey (hive_h *h, const char *name,
    * indirectly from some ri-record in blocks[].  Since we can update
    * either of these in-place, we don't need to do this recursively.
    */
-  if (le32toh (parent_nk->subkey_lf) + 0x1000 == old_offs) {
-    DEBUG (2, "replacing parent_nk->subkey_lf 0x%zx -> 0x%zx",
-           old_offs, new_offs);
+  if (le32toh (parent_nk->subkey_lf) + 0x1000 == old_offs)
     parent_nk->subkey_lf = htole32 (new_offs - 0x1000);
-  }
   else {
     for (i = 0; blocks[i] != 0; ++i) {
       if (BLOCK_ID_EQ (h, blocks[i], "ri")) {
         struct ntreg_ri_record *ri =
           (struct ntreg_ri_record *) ((char *) h->addr + blocks[i]);
         for (j = 0; j < le16toh (ri->nr_offsets); ++j)
-          if (le32toh (ri->offset[j]) + 0x1000 == old_offs) {
-            DEBUG (2, "replacing ri (0x%zx) ->offset[%zu] 0x%zx -> 0x%zx",
-                   blocks[i], j, old_offs, new_offs);
+          if (le32toh (ri->offset[j] + 0x1000) == old_offs) {
             ri->offset[j] = htole32 (new_offs - 0x1000);
             goto found_it;
           }
@@ -608,40 +604,25 @@ hivex_node_add_child (hive_h *h, hive_node_h parent, const char *name)
     return 0;
   }
 
-  size_t recoded_name_len;
-  int use_utf16 = 0;
-  char *recoded_name =
-    _hivex_encode_string (name, &recoded_name_len, &use_utf16);
-  if (recoded_name == NULL) {
-    SET_ERRNO (EINVAL, "malformed name");
-    return 0;
-  }
-
   /* Create the new nk-record. */
   static const char nk_id[2] = { 'n', 'k' };
-  size_t seg_len = sizeof (struct ntreg_nk_record) + recoded_name_len;
+  size_t seg_len = sizeof (struct ntreg_nk_record) + strlen (name);
   hive_node_h nkoffset = allocate_block (h, seg_len, nk_id);
-  if (nkoffset == 0) {
-    free (recoded_name);
+  if (nkoffset == 0)
     return 0;
-  }
 
   DEBUG (2, "allocated new nk-record for child at 0x%zx", nkoffset);
 
   struct ntreg_nk_record *nk =
     (struct ntreg_nk_record *) ((char *) h->addr + nkoffset);
-  if (use_utf16)
-    nk->flags = htole16 (0x0000);
-  else
-    nk->flags = htole16 (0x0020);
+  nk->flags = htole16 (0x0020); /* key is ASCII. */
   nk->parent = htole32 (parent - 0x1000);
   nk->subkey_lf = htole32 (0xffffffff);
   nk->subkey_lf_volatile = htole32 (0xffffffff);
   nk->vallist = htole32 (0xffffffff);
   nk->classname = htole32 (0xffffffff);
-  nk->name_len = htole16 (recoded_name_len);
-  memcpy (nk->name, recoded_name, recoded_name_len);
-  free (recoded_name);
+  nk->name_len = htole16 (strlen (name));
+  strcpy (nk->name, name);
 
   /* Inherit parent sk. */
   struct ntreg_nk_record *parent_nk =
@@ -734,9 +715,9 @@ hivex_node_add_child (hive_h *h, hive_node_h parent, const char *name)
   parent_nk->nr_subkeys = htole32 (nr_subkeys_in_parent_nk);
 
   /* Update max_subkey_name_len in parent nk. */
-  size_t utf16_len = use_utf16 ? recoded_name_len : recoded_name_len * 2;
-  if (le16toh (parent_nk->max_subkey_name_len) < utf16_len)
-    parent_nk->max_subkey_name_len = htole16 (utf16_len);
+  uint16_t max = le16toh (parent_nk->max_subkey_name_len);
+  if (max < strlen (name) * 2)  /* *2 because "recoded" in UTF16-LE. */
+    parent_nk->max_subkey_name_len = htole16 (strlen (name) * 2);
 
   return nkoffset;
 }
@@ -957,11 +938,7 @@ hivex_node_set_values (hive_h *h, hive_node_h node,
   for (i = 0; i < nr_values; ++i) {
     /* Allocate vk record to store this (key, value) pair. */
     static const char vk_id[2] = { 'v', 'k' };
-    size_t recoded_name_len;
-    int use_utf16;
-    char* recoded_name = _hivex_encode_string (values[i].key, &recoded_name_len,
-                                               &use_utf16);
-    seg_len = sizeof (struct ntreg_vk_record) + recoded_name_len;
+    seg_len = sizeof (struct ntreg_vk_record) + strlen (values[i].key);
     size_t vk_offs = allocate_block (h, seg_len, vk_id);
     if (vk_offs == 0)
       return -1;
@@ -976,18 +953,15 @@ hivex_node_set_values (hive_h *h, hive_node_h node,
 
     struct ntreg_vk_record *vk =
       (struct ntreg_vk_record *) ((char *) h->addr + vk_offs);
-    vk->name_len = htole16 (recoded_name_len);
-    memcpy (vk->name, recoded_name, recoded_name_len);
-    free (recoded_name);
+    size_t name_len = strlen (values[i].key);
+    vk->name_len = htole16 (name_len);
+    strcpy (vk->name, values[i].key);
     vk->data_type = htole32 (values[i].t);
     uint32_t len = values[i].len;
     if (len <= 4)               /* store it inline => set MSB flag */
       len |= 0x80000000;
     vk->data_len = htole32 (len);
-    if (recoded_name_len == 0)
-      vk->flags = 0;
-    else
-      vk->flags = htole16 (!use_utf16);
+    vk->flags = name_len == 0 ? 0 : 1;
 
     if (values[i].len <= 4)     /* store it inline */
       memcpy (&vk->data_offset, values[i].value, values[i].len);
@@ -1007,9 +981,9 @@ hivex_node_set_values (hive_h *h, hive_node_h node,
       vk->data_offset = htole32 (offs - 0x1000);
     }
 
-    size_t utf16_len = use_utf16 ? recoded_name_len : recoded_name_len * 2;
-    if (utf16_len > le32toh (nk->max_vk_name_len))
-      nk->max_vk_name_len = htole32 (utf16_len);
+    if (name_len * 2 > le32toh (nk->max_vk_name_len))
+      /* * 2 for UTF16-LE "reencoding" */
+      nk->max_vk_name_len = htole32 (name_len * 2);
     if (values[i].len > le32toh (nk->max_vk_data_len))
       nk->max_vk_data_len = htole32 (values[i].len);
   }

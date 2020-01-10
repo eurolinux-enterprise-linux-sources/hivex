@@ -32,6 +32,6 @@ check_DATA = $(test_hives)
 	mv $@-t $@
 
 TESTS_ENVIRONMENT = ../run
-TESTS = check-regedit.sh insert-keys.pl
+TESTS = check-regedit.sh
 
 CLEANFILES = *~ *.hive

@@ -3,7 +3,7 @@
  *   generator/generator.ml
  * ANY CHANGES YOU MAKE TO THIS FILE WILL BE LOST.
  *
- * Copyright (C) 2009-2014 Red Hat Inc.
+ * Copyright (C) 2009-2013 Red Hat Inc.
  * Derived from code by Petter Nordahl-Hagen under a compatible license:
  *   Copyright (c) 1997-2007 Petter Nordahl-Hagen.
  * Derived from code by Markus Stephany under a compatible license:
@@ -169,7 +169,11 @@ put_string_list (char * const * const argv)
 
   list = PyList_New (argc);
   for (i = 0; i < argc; ++i) {
-    PyList_SetItem (list, i, PyUnicode_DecodeUTF8 (argv[i], strlen (argv[i]), NULL));
+#ifdef HAVE_PYSTRING_ASSTRING
+    PyList_SetItem (list, i, PyString_FromString (argv[i]));
+#else
+    PyList_SetItem (list, i, PyUnicode_FromString (argv[i]));
+#endif
   }
 
   return list;
@@ -225,7 +229,11 @@ put_val_type (char *val, size_t len, hive_type t)
 {
   PyObject *r = PyTuple_New (2);
   PyTuple_SetItem (r, 0, PyLong_FromLong ((long) t));
+#ifdef HAVE_PYSTRING_ASSTRING
+  PyTuple_SetItem (r, 1, PyString_FromStringAndSize (val, len));
+#else
   PyTuple_SetItem (r, 1, PyBytes_FromStringAndSize (val, len));
+#endif
   return r;
 }
 
@@ -337,32 +345,12 @@ py_hivex_node_name (PyObject *self, PyObject *args)
     return NULL;
   }
 
-  size_t sz = hivex_node_name_len (h, node);
-  py_r = PyUnicode_DecodeUTF8 (r, sz, NULL);
+#ifdef HAVE_PYSTRING_ASSTRING
+  py_r = PyString_FromString (r);
+#else
+  py_r = PyUnicode_FromString (r);
+#endif
   free (r);  return py_r;
-}
-
-static PyObject *
-py_hivex_node_name_len (PyObject *self, PyObject *args)
-{
-  PyObject *py_r;
-  size_t r;
-  hive_h *h;
-  PyObject *py_h;
-  long node;
-
-  if (!PyArg_ParseTuple (args, (char *) "Ol:hivex_node_name_len", &py_h, &node))
-    return NULL;
-  h = get_handle (py_h);
-  r = hivex_node_name_len (h, node);
-  if (r == 0) {
-    PyErr_SetString (PyExc_RuntimeError,
-                     strerror (errno));
-    return NULL;
-  }
-
-  py_r = PyLong_FromLongLong (r);
-  return py_r;
 }
 
 static PyObject *
@@ -556,8 +544,11 @@ py_hivex_value_key (PyObject *self, PyObject *args)
     return NULL;
   }
 
-  size_t sz = hivex_value_key_len (h, val);
-  py_r = PyUnicode_DecodeUTF8 (r, sz, NULL);
+#ifdef HAVE_PYSTRING_ASSTRING
+  py_r = PyString_FromString (r);
+#else
+  py_r = PyUnicode_FromString (r);
+#endif
   free (r);  return py_r;
 }
 
@@ -702,7 +693,11 @@ py_hivex_value_string (PyObject *self, PyObject *args)
     return NULL;
   }
 
-  py_r = PyUnicode_DecodeUTF8 (r, strlen (r), NULL);
+#ifdef HAVE_PYSTRING_ASSTRING
+  py_r = PyString_FromString (r);
+#else
+  py_r = PyUnicode_FromString (r);
+#endif
   free (r);  return py_r;
 }
 
@@ -913,7 +908,6 @@ static PyMethodDef methods[] = {
   { (char *) "root", py_hivex_root, METH_VARARGS, NULL },
   { (char *) "last_modified", py_hivex_last_modified, METH_VARARGS, NULL },
   { (char *) "node_name", py_hivex_node_name, METH_VARARGS, NULL },
-  { (char *) "node_name_len", py_hivex_node_name_len, METH_VARARGS, NULL },
   { (char *) "node_timestamp", py_hivex_node_timestamp, METH_VARARGS, NULL },
   { (char *) "node_children", py_hivex_node_children, METH_VARARGS, NULL },
   { (char *) "node_get_child", py_hivex_node_get_child, METH_VARARGS, NULL },

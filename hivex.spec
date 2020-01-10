@@ -1,13 +1,13 @@
 # conditionalize Ocaml support
-%ifarch sparc64 s390
+%ifarch sparc64 s390 s390x
 %bcond_with ocaml
 %else
 %bcond_without ocaml
 %endif
 
 Name:           hivex
-Version:        1.3.10
-Release:        6.9%{?dist}
+Version:        1.3.8
+Release:        2%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 License:        LGPLv2
@@ -15,41 +15,11 @@ URL:            http://libguestfs.org/
 
 Source0:        http://libguestfs.org/download/hivex/%{name}-%{version}.tar.gz
 
-# The RHEL 7 patches are stored in the upstream git repository,
-# in the branch called 'rhel-7.4', ie:
-# https://github.com/libguestfs/hivex/tree/rhel-7.4
-
 # Fix Perl directory install path.
-Patch0001:      0001-Fix-Perl-directory-install-path.patch
+Patch0:         %{name}-1.3.8-dirs.patch
 
-# Upstream patches to fix RHBZ#1145056.
-Patch0002:      0002-value-Set-errno-0-on-non-error-path-in-hivex_value_d.patch
-Patch0003:      0003-hivexml-Tidy-up-error-handling-and-printing.patch
-Patch0004:      0004-lib-Don-t-leak-errno-from-_hivex_recode-function.patch
-
-# Upstream patches to fix RHBZ#1158992.
-Patch0005:      0005-handle-Refuse-to-open-files-8192-bytes-in-size.patch
-Patch0006:      0006-handle-Check-that-pages-do-not-extend-beyond-the-end.patch
-
-# Fix typo in documentation (RHBZ#1099286).
-Patch0007:      0007-generator-Fix-a-spelling-mistake-in-the-documentatio.patch
-
-# Tolerate corruption in some hives (RHBZ#1423436).
-Patch0008:      0008-add-HIVEX_OPEN_UNSAFE-flag.patch
-Patch0009:      0009-lib-change-how-hbin-sections-are-read.patch
-Patch0010:      0010-lib-allow-to-walk-registry-with-corrupted-blocks.patch
-Patch0011:      0011-hivexsh-add-u-flag-for-HIVEX_OPEN_UNSAFE.patch
-Patch0012:      0012-hivexregedit-allow-to-pass-HIVEX_OPEN_UNSAFE.patch
-
-# Patch generated code (because we can't assume we have OCaml on all
-# arches).  To construct this you need to do 'make prep', run the
-# generator by hand, and diff before and after.
-Patch9999:      generated.patch
-
-# Use git to apply patches.
-BuildRequires:  git
-
-# Since some patches touch autotools file, we need to rerun autoreconf.
+# Use VENDOR*DIR instead of SITE*DIR (not yet upstream).
+Patch2:         ruby-vendor-not-site.patch
 BuildRequires:  autoconf, automake, libtool, gettext-devel
 
 BuildRequires:  perl
@@ -168,7 +138,7 @@ python-%{name} contains Python bindings for %{name}.
 %package -n ruby-%{name}
 Summary:       Ruby bindings for %{name}
 Requires:      %{name} = %{version}-%{release}
-Requires:      ruby(release)
+Requires:      ruby(release) = 2.0.0
 Requires:      ruby
 Provides:      ruby(hivex) = %{version}
 
@@ -179,26 +149,14 @@ ruby-%{name} contains Ruby bindings for %{name}.
 %prep
 %setup -q
 
-# Use git to apply patches.
-# http://rwmj.wordpress.com/2011/08/09/nice-rpm-git-patch-management-trick/
-git init
-git config user.email "libguestfs@redhat.com"
-git config user.name "libguestfs"
-git add .
-git commit -a -q -m "%{version} baseline"
-for f in %{patches}; do
-    if [[ ! "$f" =~ generated.patch ]]; then
-	git am "$f"
-    else
-	patch -p1 < "$f"
-    fi
-done
-
+%patch0 -p1 -b .dirs
+%patch2 -p1 -b .rubyvendor
 autoreconf -i
+
 
 %build
 %configure --disable-static
-make V=1 INSTALLDIRS=vendor %{?_smp_mflags}
+make %{?_smp_mflags}
 
 
 %check
@@ -214,7 +172,7 @@ rm -f  $RPM_BUILD_ROOT%{_libdir}/ocaml/stublibs/*hivex*
 
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT INSTALLDIRS=vendor
+make install DESTDIR=$RPM_BUILD_ROOT
 
 # Remove unwanted libtool *.la file:
 rm $RPM_BUILD_ROOT%{_libdir}/libhivex.la
@@ -296,49 +254,6 @@ rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
 
 
 %changelog
-* Tue Oct 10 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-6.9
-- Enable OCaml subpackage on s390x.
-  resolves: rhbz#1447983
-
-* Fri Sep 22 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-6.8
-- Rebuild for OCaml 4.05
-  resolves: rhbz#1447983
-
-* Fri Feb 17 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.8
-- Tolerate corruption in some hives
-  resolves: rhbz#1423436
-- Switch to using git to manage patches.
-
-* Mon Nov 17 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.7
-- Fix: "Argument list too long" when using virt-v2v on Windows guest
-  with French copy of Citrix installed
-  related: rhbz#1145056
-
-* Mon Nov 17 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.6
-- Fix: typo in man page
-  resolves: rhbz#1099286
-
-* Thu Nov 13 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.4
-- Fix: hivex missing checks for small/truncated files
-  resolves: rhbz#1158992
-
-* Wed Sep 24 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.3
-- Fix: hivexml generates "Argument list too long" error.
-  resolves: rhbz#1145056
-
-* Fri Aug 08 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.2
-- Resolves: rhbz#1125544
-
-* Mon Jul 21 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.1
-- Rebase to hivex 1.3.10.
-  resolves: rhbz#1023978
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.3.8-4
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.3.8-3
-- Mass rebuild 2013-12-27
-
 * Thu Oct 31 2013 Richard W.M. Jones <rjones@redhat.com> - 1.3.8-2
 - Drop hivex-static subpackage
   resolves: rhbz#1020019

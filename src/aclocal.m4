@@ -220,21 +220,6 @@ m4_popdef([pkg_default])
 m4_popdef([pkg_description])
 ]) dnl PKG_NOARCH_INSTALLDIR
 
-
-# PKG_CHECK_VAR(VARIABLE, MODULE, CONFIG-VARIABLE,
-# [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# -------------------------------------------
-# Retrieves the value of the pkg-config variable for the given module.
-AC_DEFUN([PKG_CHECK_VAR],
-[AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
-AC_ARG_VAR([$1], [value of $3 for $2, overriding pkg-config])dnl
-
-_PKG_CONFIG([$1], [variable="][$3]["], [$2])
-AS_VAR_COPY([$1], [pkg_cv_][$1])
-
-AS_VAR_IF([$1], [""], [$5], [$4])dnl
-])# PKG_CHECK_VAR
-
 # Copyright (C) 2002-2013 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
@@ -1317,7 +1302,6 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([m4/00gnulib.m4])
-m4_include([m4/absolute-header.m4])
 m4_include([m4/alloca.m4])
 m4_include([m4/byteswap.m4])
 m4_include([m4/close.m4])
@@ -1328,7 +1312,6 @@ m4_include([m4/errno_h.m4])
 m4_include([m4/error.m4])
 m4_include([m4/exponentd.m4])
 m4_include([m4/extensions.m4])
-m4_include([m4/extern-inline.m4])
 m4_include([m4/fcntl-o.m4])
 m4_include([m4/fcntl.m4])
 m4_include([m4/fcntl_h.m4])
@@ -1341,7 +1324,6 @@ m4_include([m4/getdtablesize.m4])
 m4_include([m4/getopt.m4])
 m4_include([m4/getpagesize.m4])
 m4_include([m4/gettext.m4])
-m4_include([m4/gettimeofday.m4])
 m4_include([m4/gnu-make.m4])
 m4_include([m4/gnulib-common.m4])
 m4_include([m4/gnulib-comp.m4])
@@ -1407,7 +1389,6 @@ m4_include([m4/strtoull.m4])
 m4_include([m4/symlink.m4])
 m4_include([m4/sys_socket_h.m4])
 m4_include([m4/sys_stat_h.m4])
-m4_include([m4/sys_time_h.m4])
 m4_include([m4/sys_types_h.m4])
 m4_include([m4/time_h.m4])
 m4_include([m4/unistd_h.m4])

@@ -96,23 +96,20 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = ruby
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/Rakefile.in $(srcdir)/run-ruby-tests.in \
-	$(top_srcdir)/build-aux/test-driver
+	$(srcdir)/Rakefile.in $(top_srcdir)/build-aux/test-driver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
-	$(top_srcdir)/m4/absolute-header.m4 $(top_srcdir)/m4/alloca.m4 \
-	$(top_srcdir)/m4/byteswap.m4 $(top_srcdir)/m4/close.m4 \
-	$(top_srcdir)/m4/dup2.m4 $(top_srcdir)/m4/eealloc.m4 \
-	$(top_srcdir)/m4/environ.m4 $(top_srcdir)/m4/errno_h.m4 \
-	$(top_srcdir)/m4/error.m4 $(top_srcdir)/m4/exponentd.m4 \
-	$(top_srcdir)/m4/extensions.m4 \
-	$(top_srcdir)/m4/extern-inline.m4 $(top_srcdir)/m4/fcntl-o.m4 \
-	$(top_srcdir)/m4/fcntl.m4 $(top_srcdir)/m4/fcntl_h.m4 \
-	$(top_srcdir)/m4/fdopen.m4 $(top_srcdir)/m4/float_h.m4 \
-	$(top_srcdir)/m4/fpieee.m4 $(top_srcdir)/m4/fstat.m4 \
-	$(top_srcdir)/m4/getcwd.m4 $(top_srcdir)/m4/getdtablesize.m4 \
-	$(top_srcdir)/m4/getopt.m4 $(top_srcdir)/m4/getpagesize.m4 \
-	$(top_srcdir)/m4/gettext.m4 $(top_srcdir)/m4/gettimeofday.m4 \
+	$(top_srcdir)/m4/alloca.m4 $(top_srcdir)/m4/byteswap.m4 \
+	$(top_srcdir)/m4/close.m4 $(top_srcdir)/m4/dup2.m4 \
+	$(top_srcdir)/m4/eealloc.m4 $(top_srcdir)/m4/environ.m4 \
+	$(top_srcdir)/m4/errno_h.m4 $(top_srcdir)/m4/error.m4 \
+	$(top_srcdir)/m4/exponentd.m4 $(top_srcdir)/m4/extensions.m4 \
+	$(top_srcdir)/m4/fcntl-o.m4 $(top_srcdir)/m4/fcntl.m4 \
+	$(top_srcdir)/m4/fcntl_h.m4 $(top_srcdir)/m4/fdopen.m4 \
+	$(top_srcdir)/m4/float_h.m4 $(top_srcdir)/m4/fpieee.m4 \
+	$(top_srcdir)/m4/fstat.m4 $(top_srcdir)/m4/getcwd.m4 \
+	$(top_srcdir)/m4/getdtablesize.m4 $(top_srcdir)/m4/getopt.m4 \
+	$(top_srcdir)/m4/getpagesize.m4 $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/m4/gnu-make.m4 $(top_srcdir)/m4/gnulib-common.m4 \
 	$(top_srcdir)/m4/gnulib-comp.m4 $(top_srcdir)/m4/iconv.m4 \
 	$(top_srcdir)/m4/include_next.m4 \
@@ -146,19 +143,19 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
 	$(top_srcdir)/m4/strndup.m4 $(top_srcdir)/m4/strnlen.m4 \
 	$(top_srcdir)/m4/strtoll.m4 $(top_srcdir)/m4/strtoull.m4 \
 	$(top_srcdir)/m4/symlink.m4 $(top_srcdir)/m4/sys_socket_h.m4 \
-	$(top_srcdir)/m4/sys_stat_h.m4 $(top_srcdir)/m4/sys_time_h.m4 \
-	$(top_srcdir)/m4/sys_types_h.m4 $(top_srcdir)/m4/time_h.m4 \
-	$(top_srcdir)/m4/unistd_h.m4 $(top_srcdir)/m4/vasnprintf.m4 \
-	$(top_srcdir)/m4/vasprintf.m4 $(top_srcdir)/m4/warn-on-use.m4 \
-	$(top_srcdir)/m4/warnings.m4 $(top_srcdir)/m4/wchar_h.m4 \
-	$(top_srcdir)/m4/wchar_t.m4 $(top_srcdir)/m4/wint_t.m4 \
-	$(top_srcdir)/m4/write.m4 $(top_srcdir)/m4/xsize.m4 \
-	$(top_srcdir)/m4/xstrtol.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/sys_stat_h.m4 $(top_srcdir)/m4/sys_types_h.m4 \
+	$(top_srcdir)/m4/time_h.m4 $(top_srcdir)/m4/unistd_h.m4 \
+	$(top_srcdir)/m4/vasnprintf.m4 $(top_srcdir)/m4/vasprintf.m4 \
+	$(top_srcdir)/m4/warn-on-use.m4 $(top_srcdir)/m4/warnings.m4 \
+	$(top_srcdir)/m4/wchar_h.m4 $(top_srcdir)/m4/wchar_t.m4 \
+	$(top_srcdir)/m4/wint_t.m4 $(top_srcdir)/m4/write.m4 \
+	$(top_srcdir)/m4/xsize.m4 $(top_srcdir)/m4/xstrtol.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = Rakefile run-ruby-tests
+CONFIG_CLEAN_FILES = Rakefile
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -492,7 +489,6 @@ GNULIB_GETLOGIN = @GNULIB_GETLOGIN@
 GNULIB_GETLOGIN_R = @GNULIB_GETLOGIN_R@
 GNULIB_GETPAGESIZE = @GNULIB_GETPAGESIZE@
 GNULIB_GETSUBOPT = @GNULIB_GETSUBOPT@
-GNULIB_GETTIMEOFDAY = @GNULIB_GETTIMEOFDAY@
 GNULIB_GETUSERSHELL = @GNULIB_GETUSERSHELL@
 GNULIB_GL_UNISTD_H_GETOPT = @GNULIB_GL_UNISTD_H_GETOPT@
 GNULIB_GRANTPT = @GNULIB_GRANTPT@
@@ -580,7 +576,6 @@ GNULIB_RENAMEAT = @GNULIB_RENAMEAT@
 GNULIB_RMDIR = @GNULIB_RMDIR@
 GNULIB_RPMATCH = @GNULIB_RPMATCH@
 GNULIB_SCANF = @GNULIB_SCANF@
-GNULIB_SECURE_GETENV = @GNULIB_SECURE_GETENV@
 GNULIB_SETENV = @GNULIB_SETENV@
 GNULIB_SETHOSTNAME = @GNULIB_SETHOSTNAME@
 GNULIB_SIGACTION = @GNULIB_SIGACTION@
@@ -741,7 +736,6 @@ HAVE_GETLOGIN = @HAVE_GETLOGIN@
 HAVE_GETOPT_H = @HAVE_GETOPT_H@
 HAVE_GETPAGESIZE = @HAVE_GETPAGESIZE@
 HAVE_GETSUBOPT = @HAVE_GETSUBOPT@
-HAVE_GETTIMEOFDAY = @HAVE_GETTIMEOFDAY@
 HAVE_GRANTPT = @HAVE_GRANTPT@
 HAVE_GROUP_MEMBER = @HAVE_GROUP_MEMBER@
 HAVE_INTTYPES_H = @HAVE_INTTYPES_H@
@@ -794,7 +788,6 @@ HAVE_READLINKAT = @HAVE_READLINKAT@
 HAVE_REALPATH = @HAVE_REALPATH@
 HAVE_RENAMEAT = @HAVE_RENAMEAT@
 HAVE_RPMATCH = @HAVE_RPMATCH@
-HAVE_SECURE_GETENV = @HAVE_SECURE_GETENV@
 HAVE_SETENV = @HAVE_SETENV@
 HAVE_SETHOSTNAME = @HAVE_SETHOSTNAME@
 HAVE_SIGACTION = @HAVE_SIGACTION@
@@ -818,7 +811,6 @@ HAVE_STRTOLL = @HAVE_STRTOLL@
 HAVE_STRTOULL = @HAVE_STRTOULL@
 HAVE_STRUCT_RANDOM_DATA = @HAVE_STRUCT_RANDOM_DATA@
 HAVE_STRUCT_SIGACTION_SA_SIGACTION = @HAVE_STRUCT_SIGACTION_SA_SIGACTION@
-HAVE_STRUCT_TIMEVAL = @HAVE_STRUCT_TIMEVAL@
 HAVE_STRVERSCMP = @HAVE_STRVERSCMP@
 HAVE_SYMLINK = @HAVE_SYMLINK@
 HAVE_SYMLINKAT = @HAVE_SYMLINKAT@
@@ -826,7 +818,6 @@ HAVE_SYS_BITYPES_H = @HAVE_SYS_BITYPES_H@
 HAVE_SYS_INTTYPES_H = @HAVE_SYS_INTTYPES_H@
 HAVE_SYS_LOADAVG_H = @HAVE_SYS_LOADAVG_H@
 HAVE_SYS_PARAM_H = @HAVE_SYS_PARAM_H@
-HAVE_SYS_TIME_H = @HAVE_SYS_TIME_H@
 HAVE_SYS_TYPES_H = @HAVE_SYS_TYPES_H@
 HAVE_TIMEGM = @HAVE_TIMEGM@
 HAVE_TYPE_VOLATILE_SIG_ATOMIC_T = @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
@@ -920,7 +911,6 @@ NEXT_AS_FIRST_DIRECTIVE_STDIO_H = @NEXT_AS_FIRST_DIRECTIVE_STDIO_H@
 NEXT_AS_FIRST_DIRECTIVE_STDLIB_H = @NEXT_AS_FIRST_DIRECTIVE_STDLIB_H@
 NEXT_AS_FIRST_DIRECTIVE_STRING_H = @NEXT_AS_FIRST_DIRECTIVE_STRING_H@
 NEXT_AS_FIRST_DIRECTIVE_SYS_STAT_H = @NEXT_AS_FIRST_DIRECTIVE_SYS_STAT_H@
-NEXT_AS_FIRST_DIRECTIVE_SYS_TIME_H = @NEXT_AS_FIRST_DIRECTIVE_SYS_TIME_H@
 NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H = @NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H@
 NEXT_AS_FIRST_DIRECTIVE_TIME_H = @NEXT_AS_FIRST_DIRECTIVE_TIME_H@
 NEXT_AS_FIRST_DIRECTIVE_UNISTD_H = @NEXT_AS_FIRST_DIRECTIVE_UNISTD_H@
@@ -937,7 +927,6 @@ NEXT_STDIO_H = @NEXT_STDIO_H@
 NEXT_STDLIB_H = @NEXT_STDLIB_H@
 NEXT_STRING_H = @NEXT_STRING_H@
 NEXT_SYS_STAT_H = @NEXT_SYS_STAT_H@
-NEXT_SYS_TIME_H = @NEXT_SYS_TIME_H@
 NEXT_SYS_TYPES_H = @NEXT_SYS_TYPES_H@
 NEXT_TIME_H = @NEXT_TIME_H@
 NEXT_UNISTD_H = @NEXT_UNISTD_H@
@@ -1018,19 +1007,15 @@ REPLACE_FUTIMENS = @REPLACE_FUTIMENS@
 REPLACE_GETCWD = @REPLACE_GETCWD@
 REPLACE_GETDELIM = @REPLACE_GETDELIM@
 REPLACE_GETDOMAINNAME = @REPLACE_GETDOMAINNAME@
-REPLACE_GETDTABLESIZE = @REPLACE_GETDTABLESIZE@
 REPLACE_GETGROUPS = @REPLACE_GETGROUPS@
 REPLACE_GETLINE = @REPLACE_GETLINE@
 REPLACE_GETLOGIN_R = @REPLACE_GETLOGIN_R@
 REPLACE_GETPAGESIZE = @REPLACE_GETPAGESIZE@
-REPLACE_GETTIMEOFDAY = @REPLACE_GETTIMEOFDAY@
-REPLACE_GMTIME = @REPLACE_GMTIME@
 REPLACE_ISATTY = @REPLACE_ISATTY@
 REPLACE_ITOLD = @REPLACE_ITOLD@
 REPLACE_LCHOWN = @REPLACE_LCHOWN@
 REPLACE_LINK = @REPLACE_LINK@
 REPLACE_LINKAT = @REPLACE_LINKAT@
-REPLACE_LOCALTIME = @REPLACE_LOCALTIME@
 REPLACE_LOCALTIME_R = @REPLACE_LOCALTIME_R@
 REPLACE_LSEEK = @REPLACE_LSEEK@
 REPLACE_LSTAT = @REPLACE_LSTAT@
@@ -1059,7 +1044,6 @@ REPLACE_POPEN = @REPLACE_POPEN@
 REPLACE_PREAD = @REPLACE_PREAD@
 REPLACE_PRINTF = @REPLACE_PRINTF@
 REPLACE_PTHREAD_SIGMASK = @REPLACE_PTHREAD_SIGMASK@
-REPLACE_PTSNAME = @REPLACE_PTSNAME@
 REPLACE_PTSNAME_R = @REPLACE_PTSNAME_R@
 REPLACE_PUTENV = @REPLACE_PUTENV@
 REPLACE_PWRITE = @REPLACE_PWRITE@
@@ -1094,8 +1078,6 @@ REPLACE_STRSTR = @REPLACE_STRSTR@
 REPLACE_STRTOD = @REPLACE_STRTOD@
 REPLACE_STRTOIMAX = @REPLACE_STRTOIMAX@
 REPLACE_STRTOK_R = @REPLACE_STRTOK_R@
-REPLACE_STRTOUMAX = @REPLACE_STRTOUMAX@
-REPLACE_STRUCT_TIMEVAL = @REPLACE_STRUCT_TIMEVAL@
 REPLACE_SYMLINK = @REPLACE_SYMLINK@
 REPLACE_TIMEGM = @REPLACE_TIMEGM@
 REPLACE_TMPFILE = @REPLACE_TMPFILE@
@@ -1214,8 +1196,7 @@ EXTRA_DIST = \
 	ext/hivex/_hivex.c \
 	lib/hivex.rb \
 	run-ruby-tests \
-	tests/tc_*.rb \
-	tests/test_helper.rb
+	tests/tc_*.rb
 
 CLEANFILES = \
 	lib/*~ \
@@ -1229,12 +1210,8 @@ CLEANFILES = \
 
 @HAVE_RUBY_TRUE@TESTS = run-ruby-tests
 @HAVE_RUBY_TRUE@TESTS_ENVIRONMENT = ../run
-
-# Packagers can override this by doing: make INSTALLDIRS=vendor install
-# INSTALLDIRS also affects where Perl bindings are installed.
-@HAVE_RUBY_TRUE@INSTALLDIRS = site
-@HAVE_RUBY_TRUE@RUBY_LIBDIR := $(shell $(RUBY) -rrbconfig -e "puts RbConfig::CONFIG['$(INSTALLDIRS)libdir']")
-@HAVE_RUBY_TRUE@RUBY_ARCHDIR := $(shell $(RUBY) -rrbconfig -e "puts RbConfig::CONFIG['$(INSTALLDIRS)archdir']")
+@HAVE_RUBY_TRUE@RUBY_SITELIB := $(shell $(RUBY) -rrbconfig -e "puts RbConfig::CONFIG['sitelibdir']")
+@HAVE_RUBY_TRUE@RUBY_SITEARCH := $(shell $(RUBY) -rrbconfig -e "puts RbConfig::CONFIG['sitearchdir']")
 all: all-am
 
 .SUFFIXES:
@@ -1270,8 +1247,6 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 Rakefile: $(top_builddir)/config.status $(srcdir)/Rakefile.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-run-ruby-tests: $(top_builddir)/config.status $(srcdir)/run-ruby-tests.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
@@ -1605,10 +1580,10 @@ uninstall-am:
 @HAVE_RUBY_TRUE@	$(RAKE) rdoc
 
 @HAVE_RUBY_TRUE@install:
-@HAVE_RUBY_TRUE@	$(MKDIR_P) $(DESTDIR)$(RUBY_LIBDIR)
-@HAVE_RUBY_TRUE@	$(MKDIR_P) $(DESTDIR)$(RUBY_ARCHDIR)
-@HAVE_RUBY_TRUE@	$(INSTALL) -p -m 0644 $(srcdir)/lib/hivex.rb $(DESTDIR)$(RUBY_LIBDIR)
-@HAVE_RUBY_TRUE@	$(INSTALL) -p -m 0755 $(builddir)/ext/hivex/_hivex.so $(DESTDIR)$(RUBY_ARCHDIR)
+@HAVE_RUBY_TRUE@	$(MKDIR_P) $(DESTDIR)$(RUBY_SITELIB)
+@HAVE_RUBY_TRUE@	$(MKDIR_P) $(DESTDIR)$(RUBY_SITEARCH)
+@HAVE_RUBY_TRUE@	$(INSTALL) -p -m 0644 lib/hivex.rb $(DESTDIR)$(RUBY_SITELIB)
+@HAVE_RUBY_TRUE@	$(INSTALL) -p -m 0755 ext/hivex/_hivex.so $(DESTDIR)$(RUBY_SITEARCH)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -24,25 +24,25 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <iconv.h>
-#include <string.h>
 
 #include "hivex.h"
 #include "hivex-internal.h"
+#include "byte_conversions.h"
 
 char *
-_hivex_recode (const char *input_encoding, const char *input, size_t input_len,
-               const char *output_encoding, size_t *output_len)
+_hivex_windows_utf16_to_utf8 (/* const */ char *input, size_t len)
 {
-  iconv_t ic = iconv_open (output_encoding, input_encoding);
+  iconv_t ic = iconv_open ("UTF-8", "UTF-16");
   if (ic == (iconv_t) -1)
     return NULL;
 
   /* iconv(3) has an insane interface ... */
 
-  size_t outalloc = input_len;
+  /* Mostly UTF-8 will be smaller, so this is a good initial guess. */
+  size_t outalloc = len;
 
  again:;
-  size_t inlen = input_len;
+  size_t inlen = len;
   size_t outlen = outalloc;
   char *out = malloc (outlen + 1);
   if (out == NULL) {
@@ -51,11 +51,10 @@ _hivex_recode (const char *input_encoding, const char *input, size_t input_len,
     errno = err;
     return NULL;
   }
-  const char *inp = input;
+  char *inp = input;
   char *outp = out;
 
-  /* Surely iconv doesn't really modify the input buffer? XXX */
-  size_t r = iconv (ic, (char **) &inp, &inlen, &outp, &outlen);
+  size_t r = iconv (ic, &inp, &inlen, &outp, &outlen);
   if (r == (size_t) -1) {
     if (errno == E2BIG) {
       int err = errno;
@@ -82,28 +81,8 @@ _hivex_recode (const char *input_encoding, const char *input, size_t input_len,
 
   *outp = '\0';
   iconv_close (ic);
-  if (output_len != NULL)
-    *output_len = outp - out;
 
   return out;
-}
-
-/* Encode a given UTF-8 string to Latin1 (preferred) or UTF-16 for
- * storing in the hive file, as needed.
- */
-char*
-_hivex_encode_string(const char *str, size_t *size, int *utf16)
-{
-  char* outstr;
-  *utf16 = 0;
-  outstr = _hivex_recode ("UTF-8", str, strlen(str),
-                          "LATIN1", size);
-  if (outstr != NULL)
-    return outstr;
-  *utf16 = 1;
-  outstr = _hivex_recode ("UTF-8", str, strlen(str),
-                          "UTF-16LE", size);
-  return outstr;
 }
 
 /* Get the length of a UTF-16 format string.  Handle the string as
@@ -121,15 +100,5 @@ _hivex_utf16_string_len_in_bytes_max (const char *str, size_t len)
     len -= 2;
   }
 
-  return ret;
-}
-
-size_t
-_hivex_utf8_strlen (const char* str, size_t len, int utf16)
-{
-  const char *encoding = utf16 ? "UTF-16LE" : "LATIN1";
-  size_t ret;
-  char *buf = _hivex_recode(encoding, str, len, "UTF-8", &ret);
-  free(buf);
   return ret;
 }

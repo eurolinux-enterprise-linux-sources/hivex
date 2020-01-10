@@ -71,7 +71,7 @@ $(top_builddir)/html/hivexget.1.html: hivexget.pod
 	  --css 'pod.css' \
 	  --htmldir html \
 	  --outfile html/hivexget.1.html \
-	  $(abs_srcdir)/hivexget.pod
+	  sh/hivexget.pod
 
 $(top_builddir)/html/hivexsh.1.html: hivexsh.pod
 	mkdir -p $(top_builddir)/html
@@ -79,6 +79,6 @@ $(top_builddir)/html/hivexsh.1.html: hivexsh.pod
 	  --css 'pod.css' \
 	  --htmldir html \
 	  --outfile html/hivexsh.1.html \
-	  $(abs_srcdir)/hivexsh.pod
+	  sh/hivexsh.pod
 
 CLEANFILES = $(man_MANS)

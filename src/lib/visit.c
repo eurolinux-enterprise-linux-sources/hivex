@@ -32,6 +32,7 @@
 
 #include "hivex.h"
 #include "hivex-internal.h"
+#include "byte_conversions.h"
 
 int
 hivex_visit (hive_h *h, const struct hivex_visitor *visitor, size_t len,

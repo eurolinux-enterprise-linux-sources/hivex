@@ -1,5 +1,5 @@
 # hivex Ruby bindings -*- ruby -*-
-# Copyright (C) 2009-2014 Red Hat Inc.
+# Copyright (C) 2009-2011 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,18 +21,21 @@
 # length and offset for this value cell should be 37 bytes, position
 # 8712.
 
-require File::join(File::dirname(__FILE__), 'test_helper')
+require 'test/unit'
+$:.unshift(File::join(File::dirname(__FILE__), "..", "lib"))
+$:.unshift(File::join(File::dirname(__FILE__), "..", "ext", "hivex"))
+require 'hivex'
 
-class TestRLenValue < MiniTest::Unit::TestCase
+class TestRLenValue < Test::Unit::TestCase
   def test_RLenValue
-    h = Hivex::open(File::join(ENV['abs_srcdir'], '..', 'images', 'rlenvalue_test_hive'), {})
-    refute_nil(h)
+    h = Hivex::open("../images/rlenvalue_test_hive", {})
+    assert_not_nil(h)
 
     root = h.root()
-    refute_nil(root)
+    assert_not_nil(root)
 
     moderate_value_node = h.node_get_child(root, "ModerateValueParent")
-    refute_nil(moderate_value_node)
+    assert_not_nil(moderate_value_node)
 
     moderate_value_value = h.node_get_value(moderate_value_node, "33Bytes")
 
