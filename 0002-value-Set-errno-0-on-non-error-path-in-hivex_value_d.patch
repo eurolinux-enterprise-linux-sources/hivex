@@ -1,7 +1,7 @@
-From 38522d66673f341f8b12a82eb070fd1ffb8e55ec Mon Sep 17 00:00:00 2001
+From 6a4dac0da1f318a1114363b274fcee76e73fcccf Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Mon, 22 Sep 2014 15:08:44 +0100
-Subject: [PATCH 1/2] value: Set errno = 0 on non-error path in
+Subject: [PATCH 02/12] value: Set errno = 0 on non-error path in
  hivex_value_data_cell_offset (RHBZ#1145056).
 
 hivex_value_data_cell_offset may return 0 to indicate that the data is
@@ -28,5 +28,5 @@ index f222b41..aa80238 100644
    } else {
      if (len)
 -- 
-2.0.4
+1.8.3.1
 

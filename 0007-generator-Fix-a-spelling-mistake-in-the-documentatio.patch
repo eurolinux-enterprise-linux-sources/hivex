@@ -1,0 +1,27 @@
+From 026a1a2e01795defcfe5b638347671e09fcec2b6 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Tue, 20 May 2014 10:48:40 +0100
+Subject: [PATCH 07/12] generator: Fix a spelling mistake in the documentation
+ (RHBZ#1099286).
+
+(cherry picked from commit cea8dbf029029a725768caa14ddc876f56bfd878)
+---
+ generator/generator.ml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/generator/generator.ml b/generator/generator.ml
+index 02aaf12..64c7681 100755
+--- a/generator/generator.ml
++++ b/generator/generator.ml
+@@ -242,7 +242,7 @@ default key.";
+     "\
+ Return the length of the key (name) of a (key, value) pair as produced
+ by C<hivex_value_key>. The length can legitimately be 0, so errno is 
+-the necesary mechanism to check for errors.
++the necessary mechanism to check for errors.
+ 
+ In the context of Windows Registries, a zero-length name means
+ that this value is the default key for this node in the tree.
+-- 
+1.8.3.1
+

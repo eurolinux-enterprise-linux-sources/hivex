@@ -1,10 +1,11 @@
-From 4bbdf555f88baeae0fa804a369a81a83908bd705 Mon Sep 17 00:00:00 2001
+From 5c718aab579d693ea3169ab4d29b5c3bc9105aa1 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Thu, 30 Oct 2014 14:02:25 +0000
-Subject: [PATCH 2/2] handle: Check that pages do not extend beyond the end of
- the file.
+Subject: [PATCH 06/12] handle: Check that pages do not extend beyond the end
+ of the file.
 
 Thanks: Mahmoud Al-Qudsi
+(cherry picked from commit 4bbdf555f88baeae0fa804a369a81a83908bd705)
 ---
  lib/handle.c | 7 +++++++
  1 file changed, 7 insertions(+)
@@ -28,5 +29,5 @@ index a3cbcf7..3a8f09b 100644
      size_t blkoff;
      struct ntreg_hbin_block *block;
 -- 
-2.1.0
+1.8.3.1
 

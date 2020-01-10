@@ -1,7 +1,7 @@
-From c7e6dd0f09ca43c616bb2740ec748206bee6b14f Mon Sep 17 00:00:00 2001
+From 2cffe999c938a0bc67c3c6162ea4fc896af2dd22 Mon Sep 17 00:00:00 2001
 From: "Richard W.M. Jones" <rjones@redhat.com>
 Date: Mon, 22 Sep 2014 15:10:36 +0100
-Subject: [PATCH 2/2] hivexml: Tidy up error handling and printing.
+Subject: [PATCH 03/12] hivexml: Tidy up error handling and printing.
 
 (cherry picked from commit 914d9b9a91babf0227989bc7ea00cf5e41ed7da4)
 ---
@@ -78,5 +78,5 @@ index a4bc7eb..b496bb6 100644
    XML_CHECK (xmlTextWriterStartElement, (writer, BAD_CAST "byte_runs"));
    memset (buf, 0, 1+BYTE_RUN_BUF_LEN);
 -- 
-2.0.4
+1.8.3.1
 

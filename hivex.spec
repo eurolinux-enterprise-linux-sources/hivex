@@ -7,7 +7,7 @@
 
 Name:           hivex
 Version:        1.3.10
-Release:        5.7%{?dist}
+Release:        5.8%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 License:        LGPLv2
@@ -15,22 +15,42 @@ URL:            http://libguestfs.org/
 
 Source0:        http://libguestfs.org/download/hivex/%{name}-%{version}.tar.gz
 
+# The RHEL 7 patches are stored in the upstream git repository,
+# in the branch called 'rhel-7.4', ie:
+# https://github.com/libguestfs/hivex/tree/rhel-7.4
+
 # Fix Perl directory install path.
-Patch0:         %{name}-1.3.8-dirs.patch
-BuildRequires:  autoconf, automake, libtool, gettext-devel
+Patch0001:      0001-Fix-Perl-directory-install-path.patch
 
-# Upstream patches to fix RHBZ#1145056
-Patch1:         0001-value-Set-errno-0-on-non-error-path-in-hivex_value_d.patch
-Patch2:         0002-hivexml-Tidy-up-error-handling-and-printing.patch
-Patch3:         0001-lib-Don-t-leak-errno-from-_hivex_recode-function.patch
+# Upstream patches to fix RHBZ#1145056.
+Patch0002:      0002-value-Set-errno-0-on-non-error-path-in-hivex_value_d.patch
+Patch0003:      0003-hivexml-Tidy-up-error-handling-and-printing.patch
+Patch0004:      0004-lib-Don-t-leak-errno-from-_hivex_recode-function.patch
 
-# Upstream patches to fix RHBZ#1158992
-Patch4:         0001-handle-Refuse-to-open-files-8192-bytes-in-size.patch
-Patch5:         0002-handle-Check-that-pages-do-not-extend-beyond-the-end.patch
+# Upstream patches to fix RHBZ#1158992.
+Patch0005:      0005-handle-Refuse-to-open-files-8192-bytes-in-size.patch
+Patch0006:      0006-handle-Check-that-pages-do-not-extend-beyond-the-end.patch
 
 # Fix typo in documentation (RHBZ#1099286).
-# Patch contains upstream fix + generated code.
-Patch6:         0001-generator-Fix-a-spelling-mistake-in-the-documentatio.patch
+Patch0007:      0007-generator-Fix-a-spelling-mistake-in-the-documentatio.patch
+
+# Tolerate corruption in some hives (RHBZ#1423436).
+Patch0008:      0008-add-HIVEX_OPEN_UNSAFE-flag.patch
+Patch0009:      0009-lib-change-how-hbin-sections-are-read.patch
+Patch0010:      0010-lib-allow-to-walk-registry-with-corrupted-blocks.patch
+Patch0011:      0011-hivexsh-add-u-flag-for-HIVEX_OPEN_UNSAFE.patch
+Patch0012:      0012-hivexregedit-allow-to-pass-HIVEX_OPEN_UNSAFE.patch
+
+# Patch generated code (because we can't assume we have OCaml on all
+# arches).  To construct this you need to do 'make prep', run the
+# generator by hand, and diff before and after.
+Patch9999:      generated.patch
+
+# Use git to apply patches.
+BuildRequires:  git
+
+# Since some patches touch autotools file, we need to rerun autoreconf.
+BuildRequires:  autoconf, automake, libtool, gettext-devel
 
 BuildRequires:  perl
 BuildRequires:  perl-Test-Simple
@@ -159,15 +179,22 @@ ruby-%{name} contains Ruby bindings for %{name}.
 %prep
 %setup -q
 
-%patch0 -p1 -b .dirs
-autoreconf -i
+# Use git to apply patches.
+# http://rwmj.wordpress.com/2011/08/09/nice-rpm-git-patch-management-trick/
+git init
+git config user.email "libguestfs@redhat.com"
+git config user.name "libguestfs"
+git add .
+git commit -a -q -m "%{version} baseline"
+for f in %{patches}; do
+    if [[ ! "$f" =~ generated.patch ]]; then
+	git am "$f"
+    else
+	patch -p1 < "$f"
+    fi
+done
 
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
+autoreconf -i
 
 %build
 %configure --disable-static
@@ -269,6 +296,11 @@ rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
 
 
 %changelog
+* Fri Feb 17 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.8
+- Tolerate corruption in some hives
+  resolves: rhbz#1423436
+- Switch to using git to manage patches.
+
 * Mon Nov 17 2014 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.7
 - Fix: "Argument list too long" when using virt-v2v on Windows guest
   with French copy of Citrix installed
