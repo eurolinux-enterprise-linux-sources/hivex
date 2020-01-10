@@ -1,5 +1,5 @@
 # conditionalize Ocaml support
-%ifarch sparc64 s390 s390x
+%ifarch sparc64 s390
 %bcond_with ocaml
 %else
 %bcond_without ocaml
@@ -7,7 +7,7 @@
 
 Name:           hivex
 Version:        1.3.10
-Release:        5.8%{?dist}
+Release:        6.9%{?dist}
 Summary:        Read and write Windows Registry binary hive files
 
 License:        LGPLv2
@@ -296,6 +296,14 @@ rm $RPM_BUILD_ROOT%{python_sitearch}/libhivexmod.la
 
 
 %changelog
+* Tue Oct 10 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-6.9
+- Enable OCaml subpackage on s390x.
+  resolves: rhbz#1447983
+
+* Fri Sep 22 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-6.8
+- Rebuild for OCaml 4.05
+  resolves: rhbz#1447983
+
 * Fri Feb 17 2017 Richard W.M. Jones <rjones@redhat.com> - 1.3.10-5.8
 - Tolerate corruption in some hives
   resolves: rhbz#1423436
